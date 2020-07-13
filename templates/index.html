@@ -1,0 +1,20 @@
+{{/* gotype: github.com/jwilner/rv.indexPage */}}
+{{ define "title" }}something awesome{{ end }}
+{{ define "body" -}}
+    <div>
+        <h2>Create a ranked choice vote </h2>
+    </div>
+    {{ with .Form }}
+        <form method="post" action="/" novalidate>
+            <div>
+                {{ range .Errors.Choices }}
+                    <p class="error">{{ . }}</p>
+                {{ end }}
+                <p><label for="input-choices">Choices</label></p>
+                <p><input id="input-choices" type="text" name="choices" value="{{ .Choices }}"/></p>
+            </div>
+            <input type="hidden" name="type" value="rankedChoiceVote">
+            <input type="submit"/>
+        </form>
+    {{- end }}
+{{- end }}
