@@ -5,10 +5,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -56,7 +58,7 @@ func run(migDir, dbURL string, targetVer uint) error {
 		}
 	}
 
-	m, err := migrate.New("file://"+migDir, dbURL)
+	m, err := retry(func() (*migrate.Migrate, error) { return migrate.New("file://"+migDir, dbURL) })
 	if err != nil {
 		return fmt.Errorf("migrate.New(%v, redacted): %w", migDir, err)
 	}
@@ -75,7 +77,31 @@ func run(migDir, dbURL string, targetVer uint) error {
 	}()
 
 	if targetVer == 0 {
-		return m.Up()
+		if err := m.Up(); err != nil {
+			return fmt.Errorf("migrator.Up: %w", err)
+		}
+		return nil
 	}
-	return m.Migrate(targetVer)
+	if err := m.Migrate(targetVer); err != nil {
+		return fmt.Errorf("migrator.Migrate %d: %w", targetVer, err)
+	}
+	return nil
+}
+
+// this solves some flakiness in local dev
+func retry(f func() (*migrate.Migrate, error)) (m *migrate.Migrate, err error) {
+	const (
+		dur     = time.Second
+		retries = 29
+	)
+	m, err = f()
+	for i := 0; i < retries; i++ {
+		if !errors.Is(err, io.EOF) {
+			return
+		}
+		log.Printf("Waiting %v following EOF from DB; %d retries remaining\n", dur, retries-i)
+		time.Sleep(dur)
+		m, err = f()
+	}
+	return
 }

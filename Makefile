@@ -1,7 +1,13 @@
-.PHONY: test
+.PHONY: test migrate dbup
 
 test:
-	go test ./...
+	@go test ./...
 
-migrate:
-	go run ./cmd/migrate
+gen: migrate
+	@go run ./cmd/genmodels
+
+migrate: dbup
+	@go run ./cmd/migrate
+
+dbup:
+	@docker-compose up -d pg

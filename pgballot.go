@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/jackc/pgtype"
+	"github.com/jwilner/rv/models"
 )
 
 // ballotPage is the view for the page, backing the template
@@ -18,16 +18,8 @@ type ballotForm struct {
 	form
 }
 
-// ballot is the database model for a ballot
-type ballot struct {
-	key       string
-	name      string
-	choices   pgtype.TextArray
-	createdAt pgtype.Timestamptz
-}
-
 func (h *handler) getBallot(w http.ResponseWriter, r *http.Request) {
-	var b *ballot
+	var b *models.Ballot
 	err := h.txM.inTx(r.Context(), &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
 		b, err = loadBallot(r.Context(), tx)
 		return
@@ -39,7 +31,7 @@ func (h *handler) getBallot(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) postBallot(w http.ResponseWriter, r *http.Request) {
-	var b *ballot
+	var b *models.Ballot
 	err := h.txM.inTx(r.Context(), nil, func(ctx context.Context, tx *sql.Tx) (err error) {
 		b, err = loadBallot(r.Context(), tx)
 		return
@@ -54,19 +46,10 @@ func (h *handler) postBallot(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("cool ballot"))
 }
 
-func loadBallot(ctx context.Context, tx *sql.Tx) (*ballot, error) {
+func loadBallot(ctx context.Context, tx *sql.Tx) (*models.Ballot, error) {
 	key := ballotKey(ctx)
 	if key == "" {
 		return nil, sql.ErrNoRows
 	}
-	b := ballot{key: key}
-	err := tx.QueryRowContext(
-		ctx,
-		`SELECT name, choices, created_at FROM rv.ballot WHERE key = $1`,
-	).Scan(
-		&b.name,
-		&b.choices,
-		&b.createdAt,
-	)
-	return &b, err
+	return models.Ballots(models.BallotWhere.Key.EQ(key)).One(ctx, tx)
 }

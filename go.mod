@@ -13,6 +13,8 @@ require (
 	github.com/jackc/pgx/v4 v4.7.1
 	github.com/lib/pq v1.7.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/volatiletech/sqlboiler v3.7.1+incompatible // indirect
+	github.com/volatiletech/sqlboiler/v4 v4.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
