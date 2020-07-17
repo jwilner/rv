@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/jackc/pgtype"
+	"github.com/jwilner/rv/models"
 )
 
 // electionPage is the main page for managing an election
 type electionPage struct {
-	election
+	*models.Election
 	Form electionForm
 }
 
@@ -23,34 +23,18 @@ func (e *electionForm) validate() bool {
 	return true
 }
 
-// election is the election database model
-type election struct {
-	Name      string
-	Key       string
-	Choices   []string
-	CreatedAt pgtype.Timestamp
-}
-
 func (h *handler) getElection(w http.ResponseWriter, r *http.Request) {
-	_, err := h.txM.loadElection(r.Context())
+	var el *models.Election
+	err := h.txM.inTx(r.Context(), &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
+		el, err = models.Elections(models.ElectionWhere.Key.EQ(keyParam(ctx))).One(ctx, tx)
+		return
+	})
 	if handleError(w, r, err) {
 		return
 	}
-	h.tmpls.render(r.Context(), w, "election.html", &electionPage{})
+	h.tmpls.render(r.Context(), w, "election.html", &electionPage{Election: el})
 }
 
 func (h *handler) postElection(w http.ResponseWriter, r *http.Request) {
-	_, err := h.txM.loadElection(r.Context())
-	if handleError(w, r, err) {
-		return
-	}
 	_, _ = w.Write([]byte("cool election"))
-}
-
-func (t *txMgr) loadElection(ctx context.Context) (*election, error) {
-	key := electionKey(ctx)
-	if key == "" {
-		return nil, sql.ErrNoRows
-	}
-	return nil, sql.ErrNoRows
 }

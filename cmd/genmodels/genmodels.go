@@ -38,6 +38,7 @@ func main() {
 		"--no-back-referencing",
 		"--no-hooks",
 		"--no-tests",
+		"--wipe",
 	)
 	cmd.Env = []string{
 		"PSQL_DBNAME=" + strings.Trim(u.Path, "/"),

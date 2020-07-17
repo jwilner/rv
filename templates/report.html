@@ -1,4 +1,4 @@
-{{/* gotype: github.com/jwilner/rv.electionPage */}}
+{{/* gotype: github.com/jwilner/rv.reportPage */}}
 {{ define "title" }}something awesome{{ end }}
 {{ define "body" -}}
 <p>{{ .Name }}</p>
@@ -7,7 +7,7 @@
     <li>{{ . }}</li>
 {{ end }}
 </ul>
-<p>
-Link to vote: <a href="/v/{{ .BallotKey }}">http://localhost:9000/v/{{ .BallotKey }}</a>
-</p>
+{{ range .Votes }}
+<p>{{ .Name }}: {{ range .Choices }}{{ . }}{{ end }}</p>
+{{ end }}
 {{ end }}

@@ -1,0 +1,24 @@
+{{/* gotype: github.com/jwilner/rv.votePage */}}
+{{ define "title" }}something awesome{{ end }}
+{{ define "body" -}}
+<p>This is the main ballot page</p>
+{{ with .Form }}
+    <form method="post" action="/" novalidate>
+        <div>
+            {{ range .Errors.Name }}
+                <p class="error">{{ . }}</p>
+            {{ end }}
+            <p><label for="name">Please enter your name:</label></p>
+            <p><input id="name" type="text" name="name" value="{{ .Name }}"/></p>
+        </div>
+        <div>
+            {{ range .Errors.Choices }}
+                <p class="error">{{ . }}</p>
+            {{ end }}
+            <p><label for="input-choices">Choices</label></p>
+            <p><input id="input-choices" type="text" name="choices" value="{{ .Choices }}"/></p>
+        </div>
+        <input type="submit"/>
+    </form>
+{{- end }}
+{{ end }}

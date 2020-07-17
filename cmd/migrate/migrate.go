@@ -40,7 +40,7 @@ func main() {
 	case err == nil:
 		log.Println("Successfully migrated")
 	case errors.Is(err, migrate.ErrNoChange):
-		log.Println("Migrations already up-to-date")
+		log.Printf("Migrations already up-to-date")
 	default:
 		log.Fatalf("Failed migrating: %v", err)
 	}
@@ -82,6 +82,11 @@ func run(migDir, dbURL string, targetVer uint) error {
 		}
 		return nil
 	}
+	v, d, err := m.Version()
+	if err != nil {
+		return fmt.Errorf("migrator.Version: %w", err)
+	}
+	log.Println("Version, dirty", v, d, targetVer)
 	if err := m.Migrate(targetVer); err != nil {
 		return fmt.Errorf("migrator.Migrate %d: %w", targetVer, err)
 	}

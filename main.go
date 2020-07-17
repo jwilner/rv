@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 
-
 	_ "github.com/jackc/pgx/v4/stdlib" // register driver
 )
 
@@ -61,7 +60,7 @@ func run(debug bool, dbURL, addr, tmplDir string) error {
 		return fmt.Errorf("loadTmplMgr %v: %w", tmplDir, err)
 	}
 
-	app := route(&handler{tmpls, &txMgr{db}})
+	app := route(&handler{tmpls, &txMgr{db}, newStringGener()})
 
 	return listenAndServe(ctx, addr, app)
 }

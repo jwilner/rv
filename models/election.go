@@ -29,6 +29,7 @@ type Election struct {
 	Name      string            `boil:"name" json:"name" toml:"name" yaml:"name"`
 	Choices   types.StringArray `boil:"choices" json:"choices" toml:"choices" yaml:"choices"`
 	CreatedAt time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	BallotKey string            `boil:"ballot_key" json:"ballot_key" toml:"ballot_key" yaml:"ballot_key"`
 
 	R *electionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L electionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -40,15 +41,105 @@ var ElectionColumns = struct {
 	Name      string
 	Choices   string
 	CreatedAt string
+	BallotKey string
 }{
 	ID:        "id",
 	Key:       "key",
 	Name:      "name",
 	Choices:   "choices",
 	CreatedAt: "created_at",
+	BallotKey: "ballot_key",
 }
 
 // Generated where
+
+type whereHelperint64 struct{ field string }
+
+func (w whereHelperint64) EQ(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint64) NEQ(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint64) LT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint64) LTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint64) GT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint64) GTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint64) IN(slice []int64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+type whereHelperstring struct{ field string }
+
+func (w whereHelperstring) EQ(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperstring) NEQ(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperstring) LT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperstring) LTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperstring) GT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperstring) GTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperstring) IN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+type whereHelpertypes_StringArray struct{ field string }
+
+func (w whereHelpertypes_StringArray) EQ(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
+}
+func (w whereHelpertypes_StringArray) NEQ(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelpertypes_StringArray) LT(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertypes_StringArray) LTE(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertypes_StringArray) GT(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+type whereHelpertime_Time struct{ field string }
+
+func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
+}
+func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
 
 var ElectionWhere = struct {
 	ID        whereHelperint64
@@ -56,24 +147,26 @@ var ElectionWhere = struct {
 	Name      whereHelperstring
 	Choices   whereHelpertypes_StringArray
 	CreatedAt whereHelpertime_Time
+	BallotKey whereHelperstring
 }{
 	ID:        whereHelperint64{field: "\"rv\".\"election\".\"id\""},
 	Key:       whereHelperstring{field: "\"rv\".\"election\".\"key\""},
 	Name:      whereHelperstring{field: "\"rv\".\"election\".\"name\""},
 	Choices:   whereHelpertypes_StringArray{field: "\"rv\".\"election\".\"choices\""},
 	CreatedAt: whereHelpertime_Time{field: "\"rv\".\"election\".\"created_at\""},
+	BallotKey: whereHelperstring{field: "\"rv\".\"election\".\"ballot_key\""},
 }
 
 // ElectionRels is where relationship names are stored.
 var ElectionRels = struct {
-	Ballots string
+	Votes string
 }{
-	Ballots: "Ballots",
+	Votes: "Votes",
 }
 
 // electionR is where relationships are stored.
 type electionR struct {
-	Ballots BallotSlice `boil:"Ballots" json:"Ballots" toml:"Ballots" yaml:"Ballots"`
+	Votes VoteSlice `boil:"Votes" json:"Votes" toml:"Votes" yaml:"Votes"`
 }
 
 // NewStruct creates a new relationship struct
@@ -85,9 +178,9 @@ func (*electionR) NewStruct() *electionR {
 type electionL struct{}
 
 var (
-	electionAllColumns            = []string{"id", "key", "name", "choices", "created_at"}
-	electionColumnsWithoutDefault = []string{"name", "choices"}
-	electionColumnsWithDefault    = []string{"id", "key", "created_at"}
+	electionAllColumns            = []string{"id", "key", "name", "choices", "created_at", "ballot_key"}
+	electionColumnsWithoutDefault = []string{"key", "name", "choices", "created_at", "ballot_key"}
+	electionColumnsWithDefault    = []string{"id"}
 	electionPrimaryKeyColumns     = []string{"id"}
 )
 
@@ -182,30 +275,30 @@ func (q electionQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 	return count > 0, nil
 }
 
-// Ballots retrieves all the ballot's Ballots with an executor.
-func (o *Election) Ballots(mods ...qm.QueryMod) ballotQuery {
+// Votes retrieves all the vote's Votes with an executor.
+func (o *Election) Votes(mods ...qm.QueryMod) voteQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"rv\".\"ballot\".\"election_id\"=?", o.ID),
+		qm.Where("\"rv\".\"vote\".\"election_id\"=?", o.ID),
 	)
 
-	query := Ballots(queryMods...)
-	queries.SetFrom(query.Query, "\"rv\".\"ballot\"")
+	query := Votes(queryMods...)
+	queries.SetFrom(query.Query, "\"rv\".\"vote\"")
 
 	if len(queries.GetSelect(query.Query)) == 0 {
-		queries.SetSelect(query.Query, []string{"\"rv\".\"ballot\".*"})
+		queries.SetSelect(query.Query, []string{"\"rv\".\"vote\".*"})
 	}
 
 	return query
 }
 
-// LoadBallots allows an eager lookup of values, cached into the
+// LoadVotes allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (electionL) LoadBallots(ctx context.Context, e boil.ContextExecutor, singular bool, maybeElection interface{}, mods queries.Applicator) error {
+func (electionL) LoadVotes(ctx context.Context, e boil.ContextExecutor, singular bool, maybeElection interface{}, mods queries.Applicator) error {
 	var slice []*Election
 	var object *Election
 
@@ -243,8 +336,8 @@ func (electionL) LoadBallots(ctx context.Context, e boil.ContextExecutor, singul
 	}
 
 	query := NewQuery(
-		qm.From(`rv.ballot`),
-		qm.WhereIn(`rv.ballot.election_id in ?`, args...),
+		qm.From(`rv.vote`),
+		qm.WhereIn(`rv.vote.election_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -252,30 +345,30 @@ func (electionL) LoadBallots(ctx context.Context, e boil.ContextExecutor, singul
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load ballot")
+		return errors.Wrap(err, "failed to eager load vote")
 	}
 
-	var resultSlice []*Ballot
+	var resultSlice []*Vote
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice ballot")
+		return errors.Wrap(err, "failed to bind eager loaded slice vote")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on ballot")
+		return errors.Wrap(err, "failed to close results in eager load on vote")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for ballot")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for vote")
 	}
 
 	if singular {
-		object.R.Ballots = resultSlice
+		object.R.Votes = resultSlice
 		return nil
 	}
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
 			if local.ID == foreign.ElectionID {
-				local.R.Ballots = append(local.R.Ballots, foreign)
+				local.R.Votes = append(local.R.Votes, foreign)
 				break
 			}
 		}
@@ -284,11 +377,11 @@ func (electionL) LoadBallots(ctx context.Context, e boil.ContextExecutor, singul
 	return nil
 }
 
-// AddBallots adds the given related objects to the existing relationships
+// AddVotes adds the given related objects to the existing relationships
 // of the election, optionally inserting them as new records.
-// Appends related to o.R.Ballots.
+// Appends related to o.R.Votes.
 // Sets related.R.Election appropriately.
-func (o *Election) AddBallots(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Ballot) error {
+func (o *Election) AddVotes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Vote) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -298,9 +391,9 @@ func (o *Election) AddBallots(ctx context.Context, exec boil.ContextExecutor, in
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
-				"UPDATE \"rv\".\"ballot\" SET %s WHERE %s",
+				"UPDATE \"rv\".\"vote\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"election_id"}),
-				strmangle.WhereClause("\"", "\"", 2, ballotPrimaryKeyColumns),
+				strmangle.WhereClause("\"", "\"", 2, votePrimaryKeyColumns),
 			)
 			values := []interface{}{o.ID, rel.ID}
 
@@ -319,15 +412,15 @@ func (o *Election) AddBallots(ctx context.Context, exec boil.ContextExecutor, in
 
 	if o.R == nil {
 		o.R = &electionR{
-			Ballots: related,
+			Votes: related,
 		}
 	} else {
-		o.R.Ballots = append(o.R.Ballots, related...)
+		o.R.Votes = append(o.R.Votes, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &ballotR{
+			rel.R = &voteR{
 				Election: o,
 			}
 		} else {

@@ -4,9 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"encoding/csv"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	"github.com/jwilner/rv/models"
 )
 
 type indexPage struct {
@@ -61,41 +67,32 @@ func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
 	i.unmarshal(r.PostForm)
 
 	if !i.validate() {
+		log.Printf("validation failed: %v", i.Errors)
 		h.tmpls.render(r.Context(), w, "index.html", &indexPage{Form: i})
 		return
 	}
 
-	e := election{
-		Name:    i.Name,
-		Choices: parseChoices(i.Choices),
+	e := models.Election{
+		Key:       h.kGen.newKey(keyCharSet, 8),
+		BallotKey: h.kGen.newKey(keyCharSet, 8),
+		Name:      i.Name,
+		CreatedAt: time.Now().UTC(),
+		Choices:   parseChoices(i.Choices),
 	}
 	if err := h.txM.inTx(r.Context(), nil, func(ctx context.Context, tx *sql.Tx) error {
-		return insertElection(ctx, tx, &e)
+		return e.Insert(ctx, tx, boil.Infer())
 	}); err != nil {
 		handleError(w, r, err)
 		return
 	}
+
+	http.Redirect(w, r, "/e/"+e.Key, http.StatusFound)
 }
 
 func parseChoices(s string) []string {
-	row, _ := csv.NewReader(strings.NewReader(s)).Read()
+	row, err := csv.NewReader(strings.NewReader(s)).Read()
+	if err != nil {
+		log.Printf("csv.Reader.read; %v\n", err)
+	}
 	return row
-}
-
-func insertElection(ctx context.Context, tx *sql.Tx, e *election) error {
-	return tx.QueryRowContext(
-		ctx,
-		`
-INSERT INTO 
-    rv.election	(name, choices) VALUES ($1, $2) 
-RETURNING
-	key,
-    created_at
-	`,
-		e.Name,
-		e.Choices,
-	).Scan(
-		&e.Key,
-		&e.CreatedAt,
-	)
 }

@@ -9,7 +9,7 @@ require (
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/golang-migrate/migrate/v4 v4.11.0
 	github.com/golang/protobuf v1.4.2 // indirect
-	github.com/jackc/pgconn v1.6.2 // indirect
+	github.com/jackc/pgconn v1.6.2
 	github.com/jackc/pgtype v1.4.0
 	github.com/jackc/pgx/v4 v4.7.1
 	github.com/lib/pq v1.7.0 // indirect

@@ -13,22 +13,20 @@ import (
 )
 
 const (
-	paramBallotKey   = "ballotKey"
-	paramElectionKey = "electionKey"
+	paramKey = "key"
 )
 
-func ballotKey(ctx context.Context) string {
-	return chi.URLParamFromCtx(ctx, paramBallotKey)
-}
-
-func electionKey(ctx context.Context) string {
-	return chi.URLParamFromCtx(ctx, paramElectionKey)
+func keyParam(ctx context.Context) string {
+	return chi.URLParamFromCtx(ctx, paramKey)
 }
 
 type handler struct {
 	tmpls *tmplMgr
 	txM   *txMgr
+	kGen  *stringGener
 }
+
+const keyCharSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 // form contains common form behavior for template handling
 type form struct {
@@ -61,13 +59,16 @@ func route(h *handler) http.Handler {
 		r.Get("/", h.getIndex)
 		r.Post("/", h.postIndex)
 	})
-	r.Route("/b/{"+paramBallotKey+"}", func(r chi.Router) {
-		r.Get("/", h.getBallot)
-		r.Post("/", h.postBallot)
-	})
-	r.Route("/e/{"+paramElectionKey+"}", func(r chi.Router) {
+	r.Route("/e/{"+paramKey+"}", func(r chi.Router) {
 		r.Get("/", h.getElection)
 		r.Post("/", h.postElection)
+	})
+	r.Route("/v/{"+paramKey+"}", func(r chi.Router) {
+		r.Get("/", h.getVote)
+		r.Post("/", h.postVote)
+	})
+	r.Route("/r/{"+paramKey+"}", func(r chi.Router) {
+		r.Get("/", h.getReport)
 	})
 
 	r.NotFound(serve404)
@@ -90,8 +91,10 @@ func handleError(w http.ResponseWriter, r *http.Request, err error) bool {
 	}
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
+		log.Printf("received an error: %v\n", err)
 		serve404(w, r)
 	default:
+		log.Printf("received an error: %v\n", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 	return true
@@ -138,4 +141,3 @@ func (t *txMgr) inTx(
 
 	return
 }
-
