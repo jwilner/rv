@@ -14,6 +14,7 @@ require (
 	github.com/jackc/pgx/v4 v4.7.1
 	github.com/lib/pq v1.7.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/stretchr/testify v1.5.1
 	github.com/volatiletech/sqlboiler v3.7.1+incompatible
 	github.com/volatiletech/sqlboiler/v4 v4.2.0
 	github.com/volatiletech/strmangle v0.0.1

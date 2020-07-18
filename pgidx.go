@@ -31,26 +31,17 @@ func (i *indexForm) unmarshal(vals url.Values) {
 	i.Choices = vals.Get("choices")
 }
 
-func (i *indexForm) validate() bool {
+func (i *indexForm) validate() (normalizedSlice, bool) {
 	if len(i.Name) == 0 {
 		i.setErrorf("Name", "must provide a name")
 	}
-	if choices := parseChoices(i.Choices); len(choices) == 0 {
+	choices := parseChoices(i.Choices)
+	if len(choices) == 0 {
 		i.setErrorf("Choices", "must have at least one choice")
 	} else {
-		counts := make(map[string]int)
-		for _, c := range choices {
-			counts[c]++
-		}
-
-		for _, c := range choices {
-			if counts[c] > 1 {
-				i.setErrorf("Choices", "%q occurs more %d times -- can only occur once", c, counts[c])
-			}
-			counts[c] = 0
-		}
+		validateNonDupe(choices, &i.form)
 	}
-	return i.checkErrors()
+	return choices, i.checkErrors()
 }
 
 func (h *handler) getIndex(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +57,8 @@ func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
 
 	i.unmarshal(r.PostForm)
 
-	if !i.validate() {
+	choices, ok := i.validate()
+	if !ok {
 		log.Printf("validation failed: %v", i.Errors)
 		h.tmpls.render(r.Context(), w, "index.html", &indexPage{Form: i})
 		return
@@ -77,7 +69,7 @@ func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
 		BallotKey: h.kGen.newKey(keyCharSet, 8),
 		Name:      i.Name,
 		CreatedAt: time.Now().UTC(),
-		Choices:   parseChoices(i.Choices),
+		Choices:   choices.raw(),
 	}
 	if err := h.txM.inTx(r.Context(), nil, func(ctx context.Context, tx *sql.Tx) error {
 		return e.Insert(ctx, tx, boil.Infer())
@@ -89,10 +81,72 @@ func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/e/"+e.Key, http.StatusFound)
 }
 
-func parseChoices(s string) []string {
-	row, err := csv.NewReader(strings.NewReader(s)).Read()
+func parseChoices(s string) normalizedSlice {
+	reader := csv.NewReader(strings.NewReader(s))
+	reader.FieldsPerRecord = -1
+
+	rows, err := reader.ReadAll()
 	if err != nil {
 		log.Printf("csv.Reader.read; %v\n", err)
 	}
-	return row
+
+	var combined []string
+	for _, row := range rows {
+		for _, c := range row {
+			if c := strings.TrimSpace(c); c != "" {
+				combined = append(combined, c)
+			}
+		}
+	}
+	return normalize(combined)
+}
+
+func normalize(raw []string) normalizedSlice {
+	n := make(normalizedSlice, 0, len(raw))
+	for _, r := range raw {
+		n = append(n, &struct {
+			raw, normalized string
+		}{r, strings.ToLower(r)})
+	}
+	return n
+}
+
+type normalizedSlice []*struct {
+	raw, normalized string
+}
+
+func (n normalizedSlice) raw() []string {
+	o := make([]string, 0, len(n))
+	for _, c := range n {
+		o = append(o, c.raw)
+	}
+	return o
+}
+
+func validateNonDupe(choices normalizedSlice, f *form) {
+	counts := make(map[string]int)
+	for _, c := range choices {
+		counts[c.normalized]++
+	}
+
+	for _, c := range choices {
+		if counts[c.normalized] > 1 {
+			f.setErrorf("Choices", "%q occurs more %d times -- can only occur once", c.raw, counts[c.normalized])
+		}
+		counts[c.normalized] = 0
+	}
+}
+
+// return, in original order, every element in left that is not in right -- case insensitive
+func difference(left, right normalizedSlice) (diff normalizedSlice) {
+	present := make(map[string]bool, len(right))
+	for _, r := range right {
+		present[r.normalized] = true
+	}
+	for _, l := range left {
+		if !present[l.normalized] {
+			diff = append(diff, l)
+		}
+	}
+	return
 }

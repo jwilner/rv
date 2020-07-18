@@ -23,7 +23,7 @@ func init() {
 func main() {
 	dbURL := os.Getenv("DATABASE_URL")
 	port := os.Getenv("PORT")
-	debug, _ := strconv.ParseBool("DEBUG")
+	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
 	tmplDir := os.Getenv("TEMPLATE_DIR")
 	if tmplDir == "" {
 		tmplDir = "templates"

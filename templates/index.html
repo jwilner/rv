@@ -1,27 +1,25 @@
 {{/* gotype: github.com/jwilner/rv.indexPage */}}
-{{ define "title" }}something awesome{{ end }}
+{{ define "title" }}Create a ranked choice vote{{ end }}
 {{ define "body" -}}
-    <div>
-        <h2>Create a ranked choice vote </h2>
-    </div>
+    <h2>Create a ranked choice vote</h2>
     {{ with .Form }}
         <form method="post" action="/" novalidate>
             <div>
-                {{ range .Errors.Name }}
-                    <p class="error">{{ . }}</p>
-                {{ end }}
-                <p><label for="name">Name</label></p>
-                <p><input id="name" type="text" name="name" value="{{ .Name }}"/></p>
+                <label>
+                    Election Name:
+                    {{ template "errors" .Errors.Name }}
+                    <input type="text" name="name" value="{{ .Name }}"/>
+                </label>
             </div>
             <div>
-                {{ range .Errors.Choices }}
-                    <p class="error">{{ . }}</p>
-                {{ end }}
-                <p><label for="input-choices">Choices</label></p>
-                <p><input id="input-choices" type="text" name="choices" value="{{ .Choices }}"/></p>
+                <label>
+                    Choices (case-insensitive):
+                    {{ template "errors" .Errors.Choices }}
+                    <textarea id="input-choices" type="text" name="choices">{{ .Choices }}</textarea>
+                </label>
             </div>
             <input type="hidden" name="type" value="rankedChoiceVote">
-            <input type="submit"/>
+            <button class="success submit button">Submit</button>
         </form>
     {{- end }}
 {{- end }}

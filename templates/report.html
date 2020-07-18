@@ -1,13 +1,14 @@
 {{/* gotype: github.com/jwilner/rv.reportPage */}}
 {{ define "title" }}something awesome{{ end }}
 {{ define "body" -}}
-<p>{{ .Name }}</p>
-<ul>
-{{ range .Choices -}}
-    <li>{{ . }}</li>
-{{ end }}
-</ul>
-{{ range .Votes }}
-<p>{{ .Name }}: {{ range .Choices }}{{ . }}{{ end }}</p>
-{{ end }}
+    <h2>{{ .Name }}</h2>
+    {{ with .Report.Winner }}
+        <strong>Winner: {{ . }}</strong>
+    {{ end }}
+    <ul>
+        {{ range .Choices -}}
+            <li>{{ . }}</li>
+        {{ end }}
+    </ul>
+    {{ template "report" .Report }}
 {{ end }}

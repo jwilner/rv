@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgconn"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/jwilner/rv/models"
@@ -34,26 +37,14 @@ func (b *voteForm) unmarshal(vals url.Values) {
 	b.Choices = vals.Get("choices")
 }
 
-func (b *voteForm) validate() bool {
+func (b *voteForm) validate() (normalizedSlice, bool) {
 	if len(b.Name) == 0 {
 		b.setErrorf("Name", "must provide a name")
 	}
-	if choices := parseChoices(b.Choices); len(choices) == 0 {
-		b.setErrorf("Choices", "must have at least one choice")
-	} else {
-		counts := make(map[string]int)
-		for _, c := range choices {
-			counts[c]++
-		}
 
-		for _, c := range choices {
-			if counts[c] > 1 {
-				b.setErrorf("Choices", "%q occurs more %d times -- can only occur once", c, counts[c])
-			}
-			counts[c] = 0
-		}
-	}
-	return b.checkErrors()
+	choices := parseChoices(b.Choices)
+	validateNonDupe(choices, &b.form)
+	return choices, b.checkErrors()
 }
 
 func (h *handler) getVote(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +59,8 @@ func (h *handler) getVote(w http.ResponseWriter, r *http.Request) {
 	h.tmpls.render(r.Context(), w, "vote.html", &votePage{Election: e})
 }
 
+var errValidation = errors.New("invalid against db model")
+
 func (h *handler) postVote(w http.ResponseWriter, r *http.Request) {
 	if handleError(w, r, r.ParseForm()) {
 		return
@@ -76,7 +69,9 @@ func (h *handler) postVote(w http.ResponseWriter, r *http.Request) {
 	var vf voteForm
 	vf.unmarshal(r.PostForm)
 
-	if !vf.validate() {
+	choices, ok := vf.validate()
+
+	if !ok {
 		log.Printf("validation failed: %v", vf.Errors)
 		h.tmpls.render(r.Context(), w, "vote.html", &votePage{Form: vf})
 		return
@@ -87,18 +82,38 @@ func (h *handler) postVote(w http.ResponseWriter, r *http.Request) {
 		if e, err = models.Elections(models.ElectionWhere.BallotKey.EQ(keyParam(ctx))).One(ctx, tx); err != nil {
 			return fmt.Errorf("model.Elections: %w", err)
 		}
-
+		if undefined := difference(choices, normalize(e.Choices)); len(undefined) > 0 {
+			vf.setErrorf("Choices", "Unknown choices: %v", strings.Join(undefined.raw(), ", "))
+			return errValidation
+		}
 		v := models.Vote{
 			ElectionID: e.ID,
 			Name:       vf.Name,
-			Choices:    parseChoices(vf.Choices),
+			Choices:    choices.raw(),
 			CreatedAt:  time.Now().UTC(),
 		}
-
 		return v.Insert(ctx, tx, boil.Infer())
 	})
+	if errors.Is(err, errValidation) {
+		log.Printf("validation failed: %v", vf.Errors)
+		h.tmpls.render(r.Context(), w, "vote.html", &votePage{Form: vf, Election: e})
+		return
+	}
+	if isDupe(err, "vote_election_id_name_key") {
+		vf.setErrorf("Name", "This name has already been used")
+		h.tmpls.render(r.Context(), w, "vote.html", &votePage{Form: vf, Election: e})
+		return
+	}
 	if handleError(w, r, err) {
 		return
 	}
 	http.Redirect(w, r, "/r/"+e.BallotKey, http.StatusFound)
+}
+
+func isDupe(err error, constraintName string) bool {
+	pgErr := new(pgconn.PgError)
+	return errors.As(err, &pgErr) &&
+		pgErr.Code == "23505" &&
+		pgErr.SchemaName == "rv" &&
+		pgErr.ConstraintName == constraintName
 }

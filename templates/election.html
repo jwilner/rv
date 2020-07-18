@@ -1,13 +1,17 @@
 {{/* gotype: github.com/jwilner/rv.electionPage */}}
 {{ define "title" }}something awesome{{ end }}
 {{ define "body" -}}
-<p>{{ .Name }}</p>
-<ul>
-{{ range .Choices -}}
-    <li>{{ . }}</li>
-{{ end }}
-</ul>
-<p>
-Link to vote: <a href="/v/{{ .BallotKey }}">http://localhost:9000/v/{{ .BallotKey }}</a>
-</p>
+    <h2>Election: {{ .Name }}</h2>
+    <p>
+        Link to vote: <a href="/v/{{ .BallotKey }}">http://localhost:9000/v/{{ .BallotKey }}</a>
+    </p>
+    {{ if .Report.Winner }}
+        <strong>Winner: {{ .Report.Winner }}</strong>
+    {{ end }}
+    <ul>
+        {{ range .Choices -}}
+            <li>{{ . }}</li>
+        {{ end }}
+    </ul>
+    {{ template "report" .Report}}
 {{ end }}
