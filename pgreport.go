@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/heap"
 	"context"
 	"database/sql"
 	"fmt"
@@ -143,41 +142,3 @@ type vote struct {
 	name    string
 	choices normalizedSlice
 }
-
-type voteCount struct {
-	normalized string
-	count      int
-}
-
-type voteCounts struct {
-	counts []*voteCount
-	max    bool
-}
-
-func (v voteCounts) Len() int {
-	return len(v.counts)
-}
-
-func (v voteCounts) Less(i, j int) bool {
-	if v.max {
-		return v.counts[i].count > v.counts[j].count
-	}
-	return v.counts[i].count < v.counts[j].count
-}
-
-func (v voteCounts) Swap(i, j int) {
-	v.counts[i], v.counts[j] = v.counts[j], v.counts[i]
-}
-
-func (v *voteCounts) Push(x interface{}) {
-	v.counts = append(v.counts, x.(*voteCount))
-}
-
-func (v *voteCounts) Pop() interface{} {
-	lastIdx := len(v.counts) - 1
-	last := v.counts[lastIdx]
-	v.counts = v.counts[:lastIdx]
-	return last
-}
-
-var _ heap.Interface = &voteCounts{}
