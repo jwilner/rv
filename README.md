@@ -1,6 +1,6 @@
 # rv
 
-A simple ranked voting app.
+A simple ranked voting app. Aims to facilitate understanding (and adoption) of ranked choice voting algorithms in elections by making them convenient and easy to use in our daily lives.
 
 ## layout
 
