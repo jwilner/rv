@@ -10,5 +10,9 @@
             </p>
         {{ end }}
     {{ end }}
+    {{ if and (not ($.Election.Closed $.Now)) $.Election.ResultsHidden.IsSet }}
+    <p>Results will be visible when the election is complete.</p>
+    {{ else }}
     {{ template "report" . }}
+    {{- end }}
 {{ end }}

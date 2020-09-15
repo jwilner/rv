@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/volatiletech/sqlboiler/v4/types"
+
 	"github.com/jackc/pgtype"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -54,6 +56,8 @@ func (e *electionForm) unmarshal(vals url.Values) {
 		{"closeNow", updateCloseNow},
 		{"setPrivate", updateSetPrivate},
 		{"setPublic", updateSetPublic},
+		{"setResultsVisible", updateSetResultsVisible},
+		{"setResultsHidden", updateSetResultsHidden},
 	} {
 		if vals.Get(s.field) != "" {
 			e.Op |= s.flag
@@ -76,6 +80,8 @@ const (
 	updateUnset
 	updateSetPrivate
 	updateSetPublic
+	updateSetResultsVisible
+	updateSetResultsHidden
 )
 
 func (e *electionForm) validate(now time.Time) (eu electionUpdate) {
@@ -179,17 +185,29 @@ func (h *handler) postElection(w http.ResponseWriter, r *http.Request) {
 			}
 			modified = el.UnsetClose()
 		case updateSetPublic:
-			if el.Public() {
+			if el.Public.IsSet() {
 				ef.setErrorf("setPublic", "cannot set public -- already public")
 				return
 			}
-			modified = el.SetPublic()
+			modified = el.Public.Set()
 		case updateSetPrivate:
-			if !el.Public() {
+			if !el.Public.IsSet() {
 				ef.setErrorf("setPrivate", "cannot set private -- already private")
 				return
 			}
-			modified = el.UnsetPublic()
+			modified = el.Public.Unset()
+		case updateSetResultsHidden:
+			if el.ResultsHidden.IsSet() {
+				ef.setErrorf("setResultsHidden", "cannot set results hidden -- already hidden")
+				return
+			}
+			modified = el.ResultsHidden.Set()
+		case updateSetResultsVisible:
+			if !el.ResultsHidden.IsSet() {
+				ef.setErrorf("setResultsVisible", "cannot set results visible -- already visible")
+				return
+			}
+			modified = el.ResultsHidden.Unset()
 		}
 		if len(modified) == 0 {
 			log.Println("no update necessary")
@@ -223,7 +241,11 @@ func (h *handler) postElection(w http.ResponseWriter, r *http.Request) {
 // - unset: scheduled -> open (set close to null)
 
 func newElection(e *models.Election) *election {
-	el := &election{e, nil}
+	el := &election{
+		Election:      e,
+		Public:        &flagAccessor{&e.Flags, electionFlagPublic},
+		ResultsHidden: &flagAccessor{&e.Flags, electionFlagResultsHidden},
+	}
 	if e.Close.Status == pgtype.Undefined {
 		e.Close.Status = pgtype.Null
 		e.CloseTZ = null.String{}
@@ -237,7 +259,8 @@ func newElection(e *models.Election) *election {
 type election struct {
 	*models.Election
 
-	loc *time.Location
+	loc                   *time.Location
+	Public, ResultsHidden *flagAccessor
 }
 
 func (e *election) CloseScheduled(now time.Time) bool {
@@ -288,21 +311,27 @@ func (e *election) UnsetClose() []string {
 }
 
 const (
-	electionFlagPublic = "public"
+	electionFlagPublic        = "public"
+	electionFlagResultsHidden = "results_hidden"
 )
 
-func (e *election) Public() bool {
-	return contains(e.Flags, electionFlagPublic)
+type flagAccessor struct {
+	flags *types.StringArray
+	flag  string
 }
 
-func (e *election) SetPublic() []string {
-	e.Flags = add(e.Flags, electionFlagPublic)
+func (f *flagAccessor) IsSet() bool {
+	return contains(*f.flags, f.flag)
+}
+
+func (f *flagAccessor) Set() []string {
+	*f.flags = add(*f.flags, f.flag)
 	return []string{models.ElectionColumns.Flags}
 }
 
-func (e *election) UnsetPublic() []string {
-	l := remove(e.Flags, electionFlagPublic)
-	e.Flags = e.Flags[:l]
+func (f *flagAccessor) Unset() []string {
+	l := remove(*f.flags, f.flag)
+	*f.flags = (*f.flags)[:l]
 	return []string{models.ElectionColumns.Flags}
 }
 

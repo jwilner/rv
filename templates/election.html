@@ -33,12 +33,19 @@
                         {{- end }}
                     {{- end }}
                     <div class="button-group align-right">
-                        {{ if $e.Public }}
+                        {{ if $e.Public.IsSet }}
                             <input name="setPrivate" type="submit" class="success button submit"
                                    value="Set Private"/>
                         {{- else }}
                             <input name="setPublic" type="submit" class="success button submit"
                                    value="Set Public"/>
+                        {{- end }}
+                        {{ if $e.ResultsHidden.IsSet }}
+                            <input name="setResultsVisible" type="submit" class="success button submit"
+                                   value="Set Results Visible"/>
+                        {{- else }}
+                            <input name="setResultsHidden" type="submit" class="success button submit"
+                                   value="Set Results Hidden"/>
                         {{- end }}
                         {{ if $e.CanUnset $.Now }}
                             <input name="unset" type="submit" class="success button submit"

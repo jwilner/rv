@@ -138,7 +138,7 @@ func (h *handler) postVote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isDupe(err, "vote_election_id_name_key") {
-		vf.setErrorf("Question", "This name has already been used")
+		vf.setErrorf("Name", "This name has already been used")
 		h.tmpls.render(r.Context(), w, "vote.html", &votePage{Form: vf, Election: e})
 		return
 	}

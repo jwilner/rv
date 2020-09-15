@@ -21,7 +21,7 @@
                     <label>
                         Choices (case-insensitive, one per line)
                         {{ template "errors" .Errors.Choices }}
-                        <input type="text" name="choices" value="{{ .Choices }}"/>
+                        <textarea name="choices">{{ .Choices }}</textarea>
                     </label>
                 </div>
                 <input type="submit"/>
