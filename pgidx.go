@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/csv"
 	"log"
 	"net/http"
 	"net/url"
@@ -108,23 +107,15 @@ func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseChoices(s string) normalizedSlice {
-	reader := csv.NewReader(strings.NewReader(s))
-	reader.FieldsPerRecord = -1
+	var raw []string
 
-	rows, err := reader.ReadAll()
-	if err != nil {
-		log.Printf("csv.Reader.read; %v\n", err)
-	}
-
-	var combined []string
-	for _, row := range rows {
-		for _, c := range row {
-			if c := strings.TrimSpace(c); c != "" {
-				combined = append(combined, c)
-			}
+	for _, c := range strings.Split(s, "\n") {
+		if c := strings.TrimSpace(c); c != "" {
+			raw = append(raw, c)
 		}
 	}
-	return normalize(combined)
+
+	return normalize(raw)
 }
 
 func loadElectionOverview(ctx context.Context, exec boil.ContextExecutor) ([]*election, error) {

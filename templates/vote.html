@@ -19,7 +19,7 @@
                 </div>
                 <div>
                     <label>
-                        Choices (comma-delimited)
+                        Choices (case-insensitive, one per line)
                         {{ template "errors" .Errors.Choices }}
                         <input type="text" name="choices" value="{{ .Choices }}"/>
                     </label>
