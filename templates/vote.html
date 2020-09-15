@@ -2,7 +2,7 @@
 {{ define "title" }}something awesome{{ end }}
 {{ define "body" -}}
     {{ with $e := .Election }}
-        <p>{{ $e.Question }}{{ with $.TimeRemaining }}<em>({{ . }} remaining)</em>{{ end }}</p>
+        <p>{{ $e.Question }}{{ with $.TimeRemaining }} <em>({{ . }} remaining)</em>{{ end }}</p>
         <ul>
             {{ range $e.Choices }}
                 <li>{{ . }}</li>

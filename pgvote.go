@@ -31,13 +31,7 @@ func (v *votePage) TimeRemaining() string {
 	if !v.Election.CloseScheduled(v.Now) {
 		return ""
 	}
-	d := v.Election.CloseTime().Sub(v.Now)
-	return fmt.Sprintf(
-		"%0d:%0d:%0d",
-		d/(24*time.Hour),
-		(d%(24*time.Hour))/time.Hour,
-		(d%time.Hour)/time.Minute,
-	)
+	return fmt.Sprint(v.Election.CloseTime().Sub(v.Now).Round(time.Second))
 }
 
 // voteForm is the ballot submission form
