@@ -1,25 +1,47 @@
 {{/* gotype: github.com/jwilner/rv.indexPage */}}
 {{ define "title" }}Create a ranked choice vote{{ end }}
 {{ define "body" -}}
-    <h2>Create a ranked choice vote</h2>
-    {{ with .Form }}
-        <form method="post" action="/" novalidate>
-            <div>
-                <label>
-                    Election Name:
-                    {{ template "errors" .Errors.Name }}
-                    <input type="text" name="name" value="{{ .Name }}"/>
-                </label>
+    <div class="grid-x grid-padding-x grid-padding-y">
+        {{ with .Form }}
+            <div class="small-6 cell">
+                <form method="post" action="/">
+                    <h3>Create a ranked choice vote</h3>
+                    <div>
+                        <label>
+                            Question:
+                            {{ template "errors" .Errors.Question }}
+                            <input type="text" name="question" value="{{ .Question }}"/>
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            Choices (case-insensitive):
+                            {{ template "errors" .Errors.Choices }}
+                            <textarea id="input-choices" name="choices">{{ .Choices }}</textarea>
+                        </label>
+                    </div>
+                    <input type="hidden" name="type" value="rankedChoiceVote">
+                    <button class="success submit button">Submit</button>
+                </form>
             </div>
-            <div>
-                <label>
-                    Choices (case-insensitive):
-                    {{ template "errors" .Errors.Choices }}
-                    <textarea id="input-choices" type="text" name="choices">{{ .Choices }}</textarea>
-                </label>
-            </div>
-            <input type="hidden" name="type" value="rankedChoiceVote">
-            <button class="success submit button">Submit</button>
-        </form>
-    {{- end }}
+        {{- end }}
+        <div class="small-6 cell card">
+            <h3>Recent votes!</h3>
+            {{ with .Overview }}
+                <ul>
+                    {{ range . }}
+                        <li>
+                            {{ if .Closed $.Now }}
+                                <a href="/r/{{ .BallotKey }}">{{ .Question }}</a>
+                                <span class="label">Closed</span>
+                            {{ else }}
+                                <a href="/v/{{ .BallotKey }}">{{ .Question }}</a>
+                                <span class="label success">Active</span>
+                            {{ end }}
+                        </li>
+                    {{- end }}
+                </ul>
+            {{- end }}
+        </div>
+    </div>
 {{- end }}

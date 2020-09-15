@@ -11,3 +11,6 @@ migrate: dbup
 
 dbup:
 	@docker-compose up -d pg
+
+format:
+	@goimports -w -local github.com/jwilner/rv .

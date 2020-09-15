@@ -31,12 +31,33 @@
     {{ end }}
 {{end}}
 {{define "report"}}
-    {{ range .Steps }}
-        <div>
-            <h4>Round {{ .Round }}</h4>
-            {{ range .Remaining }}
-                <p>{{ .Name }}: {{ range $i, $_ := .Choices }}{{ if $i }}, {{ end }}{{ . }}{{ end }}</p>
+    <div class="small-6 card cell">
+        {{ with .Report.Winner }}
+            <strong>Winner: {{ . }}</strong>
+        {{ end }}
+        <ul>
+            {{ range .Election.Choices -}}
+                <li>{{ . }}</li>
             {{ end }}
-        </div>
+        </ul>
+        {{ range .Report.Steps }}
+            <div>
+                <h4>Round {{ .Round }}</h4>
+                {{ range .Remaining }}
+                    <p>{{ .Name }}: {{ range $i, $_ := .Choices }}{{ if $i }}, {{ end }}{{ . }}{{ end }}</p>
+                {{ end }}
+            </div>
+        {{ end }}
+    </div>
+{{end}}
+{{define "closeTime"}}
+    {{ $now := .Now }}
+    {{ with .Election}}
+        {{/* gotype: github.com/jwilner/rv.election */}}
+        {{ if or (.CloseScheduled $now) (.Closed $now) }}
+            <p>End{{ if .CloseScheduled $now }}s{{ else }}ed{{ end }} {{ .CloseTime.Format "Jan 02, 2006 at 15:04 MST" }}</p>
+        {{ else }}
+            <p>No end scheduled</p>
+        {{ end }}
     {{ end }}
 {{end}}

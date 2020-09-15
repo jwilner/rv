@@ -1,29 +1,31 @@
 {{/* gotype: github.com/jwilner/rv.votePage */}}
 {{ define "title" }}something awesome{{ end }}
 {{ define "body" -}}
-    <p>Participate in <strong>{{ .Election.Name }}</strong></p>
-    <ul>
-        {{ range .Choices }}
-            <li>{{ . }}</li>
-        {{ end }}
-    </ul>
-    {{ with .Form }}
-        <form method="post" action="/v/{{ $.BallotKey }}" novalidate>
-            <div>
-                <label>
-                    Please enter your name:
-                    {{ template "errors" .Errors.Name }}
-                    <input type="text" name="name" value="{{ .Name }}"/>
-                </label>
-            </div>
-            <div>
-                <label>
-                    Choices (comma-delimited)
-                    {{ template "errors" .Errors.Choices }}
-                    <input id="input-choices" type="text" name="choices" value="{{ .Choices }}"/>
-                </label>
-            </div>
-            <input type="submit"/>
-        </form>
+    {{ with $e := .Election }}
+        <p>{{ $e.Question }}{{ with $.TimeRemaining }}<em>({{ . }} remaining)</em>{{ end }}</p>
+        <ul>
+            {{ range $e.Choices }}
+                <li>{{ . }}</li>
+            {{ end }}
+        </ul>
+        {{ with $.Form }}
+            <form method="post" action="/v/{{ $e.BallotKey }}">
+                <div>
+                    <label>
+                        Please enter your name:
+                        {{ template "errors" .Errors.Name }}
+                        <input type="text" name="name" value="{{ .Name }}"/>
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Choices (comma-delimited)
+                        {{ template "errors" .Errors.Choices }}
+                        <input type="text" name="choices" value="{{ .Choices }}"/>
+                    </label>
+                </div>
+                <input type="submit"/>
+            </form>
+        {{- end }}
     {{- end }}
 {{ end }}

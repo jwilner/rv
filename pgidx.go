@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/jwilner/rv/models"
@@ -17,23 +18,26 @@ import (
 
 type indexPage struct {
 	Form indexForm
+
+	Now      time.Time
+	Overview []*election
 }
 
 type indexForm struct {
 	form
 
-	Name    string
-	Choices string
+	Question string
+	Choices  string
 }
 
 func (i *indexForm) unmarshal(vals url.Values) {
-	i.Name = vals.Get("name")
+	i.Question = vals.Get("question")
 	i.Choices = vals.Get("choices")
 }
 
 func (i *indexForm) validate() (normalizedSlice, bool) {
-	if len(i.Name) == 0 {
-		i.setErrorf("Name", "must provide a name")
+	if len(i.Question) == 0 {
+		i.setErrorf("Question", "must provide a question")
 	}
 	choices := parseChoices(i.Choices)
 	if len(choices) == 0 {
@@ -45,7 +49,15 @@ func (i *indexForm) validate() (normalizedSlice, bool) {
 }
 
 func (h *handler) getIndex(w http.ResponseWriter, r *http.Request) {
-	h.tmpls.render(r.Context(), w, "index.html", &indexPage{})
+	var overview []*election
+	err := h.txM.inTx(r.Context(), &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
+		overview, err = loadElectionOverview(ctx, tx)
+		return
+	})
+	if handleError(w, r, err) {
+		return
+	}
+	h.tmpls.render(r.Context(), w, "index.html", &indexPage{Overview: overview, Now: time.Now().UTC()})
 }
 
 func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
@@ -60,17 +72,31 @@ func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
 	choices, ok := i.validate()
 	if !ok {
 		log.Printf("validation failed: %v", i.Errors)
-		h.tmpls.render(r.Context(), w, "index.html", &indexPage{Form: i})
+		var overview []*election
+		err := h.txM.inTx(
+			r.Context(),
+			&sql.TxOptions{ReadOnly: true},
+			func(ctx context.Context, tx *sql.Tx) (err error) {
+				overview, err = loadElectionOverview(ctx, tx)
+				return
+			},
+		)
+		if handleError(w, r, err) {
+			return
+		}
+		h.tmpls.render(r.Context(), w, "index.html", &indexPage{Form: i, Overview: overview, Now: time.Now().UTC()})
 		return
 	}
 
-	e := models.Election{
-		Key:       h.kGen.newKey(keyCharSet, 8),
-		BallotKey: h.kGen.newKey(keyCharSet, 8),
-		Name:      i.Name,
-		CreatedAt: time.Now().UTC(),
-		Choices:   choices.raw(),
-	}
+	e := newElection(
+		&models.Election{
+			Key:       h.kGen.newKey(keyCharSet, 8),
+			BallotKey: h.kGen.newKey(keyCharSet, 8),
+			Question:  i.Question,
+			Choices:   choices.raw(),
+		},
+	)
+
 	if err := h.txM.inTx(r.Context(), nil, func(ctx context.Context, tx *sql.Tx) error {
 		return e.Insert(ctx, tx, boil.Infer())
 	}); err != nil {
@@ -99,6 +125,41 @@ func parseChoices(s string) normalizedSlice {
 		}
 	}
 	return normalize(combined)
+}
+
+func loadElectionOverview(ctx context.Context, exec boil.ContextExecutor) ([]*election, error) {
+	var ms []*models.Election
+	err := queries.Raw(
+		`
+SELECT 
+	*,
+	coalesce(close, 'infinity') > NOW() AS active,
+	CASE
+		WHEN close - NOW() > INTERVAL '0' THEN close - NOW()
+		WHEN close - NOW() <= INTERVAL '0' THEN -(close - NOW())
+		ELSE NULL
+	END AS distance
+FROM rv.election e
+WHERE 
+	'public' = ANY(e.flags)
+ORDER BY
+	active DESC,
+	distance ASC NULLS LAST
+LIMIT
+	10
+`).Bind(
+		ctx,
+		exec,
+		&ms,
+	)
+	if err != nil {
+		return nil, err
+	}
+	els := make([]*election, 0, len(ms))
+	for _, m := range ms {
+		els = append(els, newElection(m))
+	}
+	return els, nil
 }
 
 func normalize(raw []string) normalizedSlice {

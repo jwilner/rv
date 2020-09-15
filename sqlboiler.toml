@@ -1,0 +1,21 @@
+[[types]]
+[types.match]
+type = "null.Time"
+nullable = true
+
+[types.replace]
+type = "pgtype.Timestamptz"
+
+[types.imports]
+third_party = ['"github.com/jackc/pgtype"']
+
+[[types]]
+[types.match]
+type = "time.Time"
+nullable = false
+
+[types.replace]
+type = "pgtype.Timestamptz"
+
+[types.imports]
+third_party = ['"github.com/jackc/pgtype"']

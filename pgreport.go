@@ -5,13 +5,15 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/jwilner/rv/models"
 )
 
 type reportPage struct {
-	*models.Election
-	Report *report
+	Election *election
+	Report   *report
+	Now      time.Time
 }
 
 func (h *handler) getReport(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +33,12 @@ func (h *handler) getReport(w http.ResponseWriter, r *http.Request) {
 	if handleError(w, r, err) {
 		return
 	}
-	h.tmpls.render(r.Context(), w, "report.html", &reportPage{Election: e, Report: calculateReport(vs)})
+	h.tmpls.render(
+		r.Context(),
+		w,
+		"report.html",
+		&reportPage{Election: newElection(e), Report: calculateReport(vs), Now: time.Now().UTC()},
+	)
 }
 
 type report struct {

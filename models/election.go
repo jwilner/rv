@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/jackc/pgtype"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,12 +26,15 @@ import (
 
 // Election is an object representing the database table.
 type Election struct {
-	ID        int64             `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Key       string            `boil:"key" json:"key" toml:"key" yaml:"key"`
-	Name      string            `boil:"name" json:"name" toml:"name" yaml:"name"`
-	Choices   types.StringArray `boil:"choices" json:"choices" toml:"choices" yaml:"choices"`
-	CreatedAt time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	BallotKey string            `boil:"ballot_key" json:"ballot_key" toml:"ballot_key" yaml:"ballot_key"`
+	ID        int64              `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Key       string             `boil:"key" json:"key" toml:"key" yaml:"key"`
+	Question  string             `boil:"question" json:"question" toml:"question" yaml:"question"`
+	Choices   types.StringArray  `boil:"choices" json:"choices" toml:"choices" yaml:"choices"`
+	CreatedAt pgtype.Timestamptz `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	BallotKey string             `boil:"ballot_key" json:"ballot_key" toml:"ballot_key" yaml:"ballot_key"`
+	Close     pgtype.Timestamptz `boil:"close" json:"close,omitempty" toml:"close" yaml:"close,omitempty"`
+	CloseTZ   null.String        `boil:"close_tz" json:"close_tz,omitempty" toml:"close_tz" yaml:"close_tz,omitempty"`
+	Flags     types.StringArray  `boil:"flags" json:"flags" toml:"flags" yaml:"flags"`
 
 	R *electionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L electionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -38,17 +43,23 @@ type Election struct {
 var ElectionColumns = struct {
 	ID        string
 	Key       string
-	Name      string
+	Question  string
 	Choices   string
 	CreatedAt string
 	BallotKey string
+	Close     string
+	CloseTZ   string
+	Flags     string
 }{
 	ID:        "id",
 	Key:       "key",
-	Name:      "name",
+	Question:  "question",
 	Choices:   "choices",
 	CreatedAt: "created_at",
 	BallotKey: "ballot_key",
+	Close:     "close",
+	CloseTZ:   "close_tz",
+	Flags:     "flags",
 }
 
 // Generated where
@@ -120,41 +131,70 @@ func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
-type whereHelpertime_Time struct{ field string }
+type whereHelperpgtype_Timestamptz struct{ field string }
 
-func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
+func (w whereHelperpgtype_Timestamptz) EQ(x pgtype.Timestamptz) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.EQ, x)
 }
-func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
+func (w whereHelperpgtype_Timestamptz) NEQ(x pgtype.Timestamptz) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.NEQ, x)
 }
-func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+func (w whereHelperpgtype_Timestamptz) LT(x pgtype.Timestamptz) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+func (w whereHelperpgtype_Timestamptz) LTE(x pgtype.Timestamptz) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+func (w whereHelperpgtype_Timestamptz) GT(x pgtype.Timestamptz) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+func (w whereHelperpgtype_Timestamptz) GTE(x pgtype.Timestamptz) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+type whereHelpernull_String struct{ field string }
+
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
 var ElectionWhere = struct {
 	ID        whereHelperint64
 	Key       whereHelperstring
-	Name      whereHelperstring
+	Question  whereHelperstring
 	Choices   whereHelpertypes_StringArray
-	CreatedAt whereHelpertime_Time
+	CreatedAt whereHelperpgtype_Timestamptz
 	BallotKey whereHelperstring
+	Close     whereHelperpgtype_Timestamptz
+	CloseTZ   whereHelpernull_String
+	Flags     whereHelpertypes_StringArray
 }{
 	ID:        whereHelperint64{field: "\"rv\".\"election\".\"id\""},
 	Key:       whereHelperstring{field: "\"rv\".\"election\".\"key\""},
-	Name:      whereHelperstring{field: "\"rv\".\"election\".\"name\""},
+	Question:  whereHelperstring{field: "\"rv\".\"election\".\"question\""},
 	Choices:   whereHelpertypes_StringArray{field: "\"rv\".\"election\".\"choices\""},
-	CreatedAt: whereHelpertime_Time{field: "\"rv\".\"election\".\"created_at\""},
+	CreatedAt: whereHelperpgtype_Timestamptz{field: "\"rv\".\"election\".\"created_at\""},
 	BallotKey: whereHelperstring{field: "\"rv\".\"election\".\"ballot_key\""},
+	Close:     whereHelperpgtype_Timestamptz{field: "\"rv\".\"election\".\"close\""},
+	CloseTZ:   whereHelpernull_String{field: "\"rv\".\"election\".\"close_tz\""},
+	Flags:     whereHelpertypes_StringArray{field: "\"rv\".\"election\".\"flags\""},
 }
 
 // ElectionRels is where relationship names are stored.
@@ -178,9 +218,9 @@ func (*electionR) NewStruct() *electionR {
 type electionL struct{}
 
 var (
-	electionAllColumns            = []string{"id", "key", "name", "choices", "created_at", "ballot_key"}
-	electionColumnsWithoutDefault = []string{"key", "name", "choices", "created_at", "ballot_key"}
-	electionColumnsWithDefault    = []string{"id"}
+	electionAllColumns            = []string{"id", "key", "question", "choices", "created_at", "ballot_key", "close", "close_tz", "flags"}
+	electionColumnsWithoutDefault = []string{"key", "question", "choices", "created_at", "ballot_key", "close", "close_tz"}
+	electionColumnsWithDefault    = []string{"id", "flags"}
 	electionPrimaryKeyColumns     = []string{"id"}
 )
 

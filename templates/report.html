@@ -1,14 +1,14 @@
 {{/* gotype: github.com/jwilner/rv.reportPage */}}
 {{ define "title" }}something awesome{{ end }}
 {{ define "body" -}}
-    <h2>{{ .Name }}</h2>
-    {{ with .Report.Winner }}
-        <strong>Winner: {{ . }}</strong>
-    {{ end }}
-    <ul>
-        {{ range .Choices -}}
-            <li>{{ . }}</li>
+    {{ with .Election }}
+        <h2>{{ .Question }}</h2>
+        {{ template "closeTime" $ }}
+        {{ if not (.Closed $.Now) }}
+            <p>
+                Link to vote: <a href="/v/{{ .BallotKey }}">http://localhost:9000/v/{{ .BallotKey }}</a>
+            </p>
         {{ end }}
-    </ul>
-    {{ template "report" .Report }}
+    {{ end }}
+    {{ template "report" . }}
 {{ end }}

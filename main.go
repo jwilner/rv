@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgtype"
+
 	_ "github.com/jackc/pgx/v4/stdlib" // register driver
 )
 
@@ -28,7 +30,9 @@ func main() {
 	if tmplDir == "" {
 		tmplDir = "templates"
 	}
-
+	if debug {
+		log.SetFlags(log.LstdFlags | log.Lshortfile)
+	}
 	if err := run(debug, dbURL, ":"+port, tmplDir); err != nil {
 		log.Fatal(err)
 	}
@@ -60,9 +64,26 @@ func run(debug bool, dbURL, addr, tmplDir string) error {
 		return fmt.Errorf("loadTmplMgr %v: %w", tmplDir, err)
 	}
 
-	app := route(&handler{tmpls, &txMgr{db}, newStringGener()})
+	tzes, err := loadTimeZones(ctx, db)
+	if err != nil {
+		return fmt.Errorf("loadTimeZone: %v", err)
+	}
+
+	app := route(&handler{tmpls, &txMgr{db}, newStringGener(), tzes})
 
 	return listenAndServe(ctx, addr, app)
+}
+
+func loadTimeZones(ctx context.Context, db *sql.DB) (s []string, err error) {
+	var arr pgtype.TextArray
+	if err = db.QueryRowContext(
+		ctx,
+		`SELECT ARRAY_AGG(name ORDER BY name) FROM pg_timezone_names`,
+	).Scan(&arr); err != nil {
+		return
+	}
+	err = arr.AssignTo(&s)
+	return
 }
 
 // cancelOnSignal cancels the provided context when any of the signals is received

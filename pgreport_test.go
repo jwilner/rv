@@ -28,11 +28,11 @@ func Test_calculateReport(t *testing.T) {
 		{
 			"one vote",
 			v{{Name: "jack", Choices: sa{"bob"}}},
-			&r{"bob", s{{nil, rv{{"jack", sa{"bob"}}}, vc{"bob": 1}}}}},
+			&r{"bob", s{{1, nil, rv{{"jack", sa{"bob"}}}, vc{"bob": 1}}}}},
 		{
 			"agreeing vote",
 			v{{Name: "jack", Choices: sa{"bob"}}, {Name: "jill", Choices: sa{"bob"}}},
-			&r{"bob", s{{nil, rv{{"jack", sa{"bob"}}, {"jill", sa{"bob"}}}, vc{"bob": 2}}}},
+			&r{"bob", s{{1, nil, rv{{"jack", sa{"bob"}}, {"jill", sa{"bob"}}}, vc{"bob": 2}}}},
 		},
 		{
 			"disagreeing vote eliminates lexicographically least choice",
@@ -40,8 +40,8 @@ func Test_calculateReport(t *testing.T) {
 			&r{
 				"bob",
 				s{
-					{nil, rv{{"jack", sa{"bob"}}, {"jill", sa{"bill"}}}, vc{"bob": 1, "bill": 1}},
-					{[]string{"jill"}, rv{{"jack", sa{"bob"}}}, vc{"bob": 1}},
+					{1, nil, rv{{"jack", sa{"bob"}}, {"jill", sa{"bill"}}}, vc{"bob": 1, "bill": 1}},
+					{2, []string{"jill"}, rv{{"jack", sa{"bob"}}}, vc{"bob": 1}},
 				},
 			},
 		},
@@ -56,10 +56,12 @@ func Test_calculateReport(t *testing.T) {
 				"bill",
 				s{
 					{
+						1,
 						nil,
 						rv{{"jack", sa{"bob"}}, {"jill", sa{"bill"}}, {"jon", sa{"Barbs", "Bill"}}},
 						vc{"bob": 1, "bill": 1, "barbs": 1}},
 					{
+						2,
 						nil,
 						rv{{"jack", sa{"bob"}}, {"jill", sa{"bill"}}, {"jon", sa{"Bill"}}},
 						vc{"bob": 1, "bill": 2},

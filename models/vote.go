@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/jackc/pgtype"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,11 +25,11 @@ import (
 
 // Vote is an object representing the database table.
 type Vote struct {
-	ID         int64             `boil:"id" json:"id" toml:"id" yaml:"id"`
-	ElectionID int64             `boil:"election_id" json:"election_id" toml:"election_id" yaml:"election_id"`
-	Name       string            `boil:"name" json:"name" toml:"name" yaml:"name"`
-	Choices    types.StringArray `boil:"choices" json:"choices" toml:"choices" yaml:"choices"`
-	CreatedAt  time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID         int64              `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ElectionID int64              `boil:"election_id" json:"election_id" toml:"election_id" yaml:"election_id"`
+	Name       string             `boil:"name" json:"name" toml:"name" yaml:"name"`
+	Choices    types.StringArray  `boil:"choices" json:"choices" toml:"choices" yaml:"choices"`
+	CreatedAt  pgtype.Timestamptz `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
 	R *voteR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L voteL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -55,13 +56,13 @@ var VoteWhere = struct {
 	ElectionID whereHelperint64
 	Name       whereHelperstring
 	Choices    whereHelpertypes_StringArray
-	CreatedAt  whereHelpertime_Time
+	CreatedAt  whereHelperpgtype_Timestamptz
 }{
 	ID:         whereHelperint64{field: "\"rv\".\"vote\".\"id\""},
 	ElectionID: whereHelperint64{field: "\"rv\".\"vote\".\"election_id\""},
 	Name:       whereHelperstring{field: "\"rv\".\"vote\".\"name\""},
 	Choices:    whereHelpertypes_StringArray{field: "\"rv\".\"vote\".\"choices\""},
-	CreatedAt:  whereHelpertime_Time{field: "\"rv\".\"vote\".\"created_at\""},
+	CreatedAt:  whereHelperpgtype_Timestamptz{field: "\"rv\".\"vote\".\"created_at\""},
 }
 
 // VoteRels is where relationship names are stored.

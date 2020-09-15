@@ -24,6 +24,7 @@ type handler struct {
 	tmpls *tmplMgr
 	txM   *txMgr
 	kGen  *stringGener
+	tzes  []string
 }
 
 const keyCharSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
