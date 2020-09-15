@@ -11,7 +11,7 @@
     <div class="top-bar">
         <div class="top-bar-left">
             <ul class="menu">
-                <li class="menu-text"><a href="/">Ranked Choice Vote</a></li>
+                <li><a href="/">Ranked Choice Vote</a></li>
             </ul>
         </div>
     </div>
@@ -55,7 +55,8 @@
     {{ with .Election}}
         {{/* gotype: github.com/jwilner/rv.election */}}
         {{ if or (.CloseScheduled $now) (.Closed $now) }}
-            <p>End{{ if .CloseScheduled $now }}s{{ else }}ed{{ end }} {{ .CloseTime.Format "Jan 02, 2006 at 15:04 MST" }}</p>
+            <p>
+                End{{ if .CloseScheduled $now }}s{{ else }}ed{{ end }} {{ .CloseTime.Format "Jan 02, 2006 at 15:04 MST" }}</p>
         {{ else }}
             <p>No end scheduled</p>
         {{ end }}

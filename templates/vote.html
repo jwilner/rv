@@ -2,30 +2,38 @@
 {{ define "title" }}something awesome{{ end }}
 {{ define "body" -}}
     {{ with $e := .Election }}
-        <p>{{ $e.Question }}{{ with $.TimeRemaining }} <em>({{ . }} remaining)</em>{{ end }}</p>
-        <ul>
-            {{ range $e.Choices }}
-                <li>{{ . }}</li>
-            {{ end }}
-        </ul>
-        {{ with $.Form }}
-            <form method="post" action="/v/{{ $e.BallotKey }}">
-                <div>
-                    <label>
-                        Please enter your name:
-                        {{ template "errors" .Errors.Name }}
-                        <input type="text" name="name" value="{{ .Name }}"/>
-                    </label>
-                </div>
-                <div>
-                    <label>
-                        Choices (case-insensitive, one per line)
-                        {{ template "errors" .Errors.Choices }}
-                        <textarea name="choices">{{ .Choices }}</textarea>
-                    </label>
-                </div>
-                <input type="submit"/>
-            </form>
-        {{- end }}
+        <div class="grid-x grid-padding-x">
+            <div class="cell small-6">
+                <p>
+                    <strong>{{ $e.Question }}</strong>{{ with $.TimeRemaining }} <em>({{ . }} remaining)</em>{{ end }}
+                </p>
+                <ul>
+                    {{ range $e.Choices }}
+                        <li>{{ . }}</li>
+                    {{ end }}
+                </ul>
+            </div>
+            <div class="cell small-6 card">
+                {{ with $.Form }}
+                    <form method="post" action="/v/{{ $e.BallotKey }}">
+                        <div>
+                            <label>
+                                Please enter your name:
+                                {{ template "errors" .Errors.Name }}
+                                <input type="text" name="name" value="{{ .Name }}"/>
+                            </label>
+                        </div>
+                        <div>
+                            <label>
+                                Choices (case-insensitive, one per line)
+                                {{ template "errors" .Errors.Choices }}
+                                <textarea name="choices">{{ .Choices }}</textarea>
+                            </label>
+                        </div>
+                        <button class="button submit success" name="vote">Vote</button>
+                    </form>
+                {{- end }}
+            </div>
+        </div>
     {{- end }}
 {{ end }}

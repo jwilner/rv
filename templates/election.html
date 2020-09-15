@@ -10,7 +10,6 @@
             {{ with $e := $.Election }}
                 <form method="post" action="/e/{{ $e.Key }}" class="small-6 card cell">
                     <h3>Settings</h3>
-
                     {{ if $e.CanSchedule $.Now }}
                         {{ with $s := $.ScheduleValue }}
                             <label>Date
