@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import logo from './logo.svg';
 import './App.css';
-import {CreateRequest, RVerPromiseClient} from './pb/rvapi/rvapi_grpc_web_pb'
+import {OverviewRequest, RVerPromiseClient} from './pb/rvapi/rvapi_grpc_web_pb'
 
 // is there a better way to do this?
 const client = new RVerPromiseClient(
@@ -9,35 +9,36 @@ const client = new RVerPromiseClient(
 );
 
 class App extends Component {
-    state = {}
+    state = {
+        electionsList: []
+    }
 
-    call = () => {
-        const req = new CreateRequest();
-        req.setQuestion("this is pretty cool")
-        req.setChoicesList(["ok", "abc", "def"])
-        client.create(req).then(resp => {
-            console.log(resp.getElection().getQuestion());
-            console.log(resp.getElection().getChoicesList());
-        }).catch(resp => console.log(resp))
+    constructor(props) {
+        super(props);
+        this.loadOverview = this.loadOverview.bind(this);
+    }
+
+    componentDidMount() {
+        this.loadOverview();
+    }
+
+    loadOverview() {
+        client.overview(new OverviewRequest())
+            .then(resp => this.setState({electionsList: resp.getElectionsList()}))
+            .catch(resp => console.log(resp));
     }
 
     render() {
-        this.call();
         return (
             <div className="App">
                 <header className="App-header">
                     <img src={logo} className="App-logo" alt="logo"/>
-                    <p>
-                        Edit <code>src/App.js</code> and save to reload.
-                    </p>
-                    <a
-                        className="App-link"
-                        href="https://reactjs.org"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Learn React
-                    </a>
+                    <button onClick={this.loadOverview}>Reload</button>
+                    <ul>
+                        {this.state.electionsList.map(e => (
+                            <li key={e.getBallotKey()}>{e.getQuestion()}</li>
+                        ))}
+                    </ul>
                 </header>
             </div>
         );
