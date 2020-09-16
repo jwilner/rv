@@ -3,6 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"github.com/golang/protobuf/proto"
+	"github.com/jwilner/rv/pkg/pb/rvapi"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log"
 	"net/http"
 	"net/url"
@@ -59,6 +65,89 @@ func (h *handler) getIndex(w http.ResponseWriter, r *http.Request) {
 	h.tmpls.render(r.Context(), w, "index.html", &indexPage{Overview: overview, Now: time.Now().UTC()})
 }
 
+func (h *handler) Create(ctx context.Context, request *rvapi.CreateRequest) (*rvapi.CreateResponse, error) {
+	norm, err := grpcValidate(request)
+	if err != nil {
+		return nil, err
+	}
+	el, err := h.create(ctx, request.Question, norm)
+	if err != nil {
+		return nil, err
+	}
+	return &rvapi.CreateResponse{Election: el.proto()}, nil
+}
+
+func (h *handler) Overview(ctx context.Context, _ *rvapi.OverviewRequest) (*rvapi.OverviewResponse, error) {
+	var els []*election
+	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
+		els, err = loadElectionOverview(ctx, tx)
+		return
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resp := rvapi.OverviewResponse{Elections: make([]*rvapi.Election, 0, len(els))}
+	for _, el := range els {
+		resp.Elections = append(resp.Elections, el.proto())
+	}
+
+	return &resp, nil
+}
+
+func (e *election) proto() *rvapi.Election {
+	return &rvapi.Election{
+		Question:  e.Question,
+		Choices:   e.Choices,
+		Key:       e.Key,
+		BallotKey: e.BallotKey,
+	}
+}
+
+func grpcValidate(req *rvapi.CreateRequest) (normalizedSlice, error) {
+	var details []proto.Message
+
+	norm := normalize(req.Choices)
+	if len(norm) == 0 {
+		details = append(details, &errdetails.BadRequest_FieldViolation{
+			Field:       "Choices",
+			Description: "Cannot be empty",
+		})
+	}
+
+	counts := make(map[string]int)
+	for _, c := range norm {
+		counts[c.normalized]++
+	}
+
+	for _, c := range norm {
+		if count := counts[c.normalized]; count > 1 {
+			details = append(details, &errdetails.BadRequest_FieldViolation{
+				Field:       "Choices",
+				Description: fmt.Sprintf("%q occurs %d times", c.raw, count),
+			})
+		}
+		delete(counts, c.normalized)
+	}
+
+	if len(req.Question) == 0 {
+		details = append(details, &errdetails.BadRequest_FieldViolation{
+			Field:       "Question",
+			Description: "Cannot be empty",
+		})
+	}
+
+	if len(details) > 0 {
+		s, err := status.New(codes.InvalidArgument, "Invalid create request").WithDetails(details...)
+		if err != nil {
+			panic(fmt.Sprintf("failed to construct proper err: %v", err))
+		}
+		return nil, s.Err()
+	}
+
+	return norm, nil
+}
+
 func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
 	if handleError(w, r, r.ParseForm()) {
 		return
@@ -87,23 +176,27 @@ func (h *handler) postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e := newElection(
-		&models.Election{
-			Key:       h.kGen.newKey(keyCharSet, 8),
-			BallotKey: h.kGen.newKey(keyCharSet, 8),
-			Question:  i.Question,
-			Choices:   choices.raw(),
-		},
-	)
-
-	if err := h.txM.inTx(r.Context(), nil, func(ctx context.Context, tx *sql.Tx) error {
-		return e.Insert(ctx, tx, boil.Infer())
-	}); err != nil {
-		handleError(w, r, err)
+	e, err := h.create(r.Context(), i.Question, choices)
+	if handleError(w, r, err) {
 		return
 	}
 
 	http.Redirect(w, r, "/e/"+e.Key, http.StatusFound)
+}
+
+func (h *handler) create(ctx context.Context, question string, choices normalizedSlice) (*election, error) {
+	e := newElection(
+		&models.Election{
+			Key:       h.kGen.newKey(keyCharSet, 8),
+			BallotKey: h.kGen.newKey(keyCharSet, 8),
+			Question:  question,
+			Choices:   choices.raw(),
+		},
+	)
+	err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		return e.Insert(ctx, tx, boil.Infer())
+	})
+	return e, err
 }
 
 func parseChoices(s string) normalizedSlice {

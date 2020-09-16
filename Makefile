@@ -14,3 +14,11 @@ dbup:
 
 format:
 	@goimports -w -local github.com/jwilner/rv .
+
+proto:
+	@protoc -I=. \
+		pb/rvapi/*.proto \
+		--go_out=:pkg --go_opt=paths=source_relative \
+		--go-grpc_out=:pkg --go-grpc_opt=paths=source_relative \
+		--js_out=import_style=commonjs:src/ \
+		--grpc-web_out=import_style=commonjs,mode=grpcwebtext:src/\

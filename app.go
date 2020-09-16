@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/jwilner/rv/pkg/pb/rvapi"
 	"log"
 	"net/http"
 
@@ -21,6 +22,8 @@ func keyParam(ctx context.Context) string {
 }
 
 type handler struct {
+	rvapi.UnimplementedRVerServer
+
 	tmpls *tmplMgr
 	txM   *txMgr
 	kGen  *stringGener
@@ -46,7 +49,7 @@ func (f *form) checkErrors() bool {
 	return len(f.Errors) == 0
 }
 
-func route(h *handler) http.Handler {
+func route(h *handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(

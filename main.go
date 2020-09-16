@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/jwilner/rv/pkg/pb/rvapi"
+	"google.golang.org/grpc"
 	"log"
 	"net"
 	"net/http"
@@ -25,21 +28,26 @@ func init() {
 func main() {
 	dbURL := os.Getenv("DATABASE_URL")
 	port := os.Getenv("PORT")
+	staticDir := os.Getenv("STATIC_DIR") // where to serve static assets from, if at all
 	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
+	serveGRPC, _ := strconv.ParseBool(os.Getenv("SERVE_GRPC"))
+
 	tmplDir := os.Getenv("TEMPLATE_DIR")
 	if tmplDir == "" {
 		tmplDir = "templates"
 	}
+
 	if debug {
 		log.SetFlags(log.LstdFlags | log.Lshortfile)
 	}
-	if err := run(debug, dbURL, ":"+port, tmplDir); err != nil {
+
+	if err := run(debug, serveGRPC, dbURL, ":"+port, tmplDir, staticDir); err != nil {
 		log.Fatal(err)
 	}
 }
 
 // run runs the application, connecting to the database at dbURL and listening for HTTP at the provided address.
-func run(debug bool, dbURL, addr, tmplDir string) error {
+func run(debug, serveGRPC bool, dbURL, addr, tmplDir, staticDir string) error {
 	// construct an app ctx that we can cancel
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
@@ -49,29 +57,51 @@ func run(debug bool, dbURL, addr, tmplDir string) error {
 	// cancel it if interrupted
 	cancelOnSignal(ctx, cncl, os.Interrupt)
 
-	db, err := connectDB(ctx, dbURL)
-	if err != nil {
-		return fmt.Errorf("unable to connect to db: %w", err)
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Printf("error while closing DB: %v", err)
+	h := handler{kGen: newStringGener()}
+	{
+		db, err := connectDB(ctx, dbURL)
+		if err != nil {
+			return fmt.Errorf("unable to connect to db: %w", err)
 		}
-	}()
+		defer func() {
+			if err := db.Close(); err != nil {
+				log.Printf("error while closing DB: %v", err)
+			}
+		}()
+		h.txM = &txMgr{db}
 
-	tmpls, err := loadTmplMgr(tmplDir)
-	if err != nil {
+		if h.tzes, err = loadTimeZones(ctx, db); err != nil {
+			return fmt.Errorf("loadTimeZone: %v", err)
+		}
+	}
+
+	var err error
+	if h.tmpls, err = loadTmplMgr(tmplDir); err != nil {
 		return fmt.Errorf("loadTmplMgr %v: %w", tmplDir, err)
 	}
 
-	tzes, err := loadTimeZones(ctx, db)
-	if err != nil {
-		return fmt.Errorf("loadTimeZone: %v", err)
+	app := route(&h)
+
+	if staticDir != "" {
+		app.Mount("/react/", http.StripPrefix("/react/", http.FileServer(http.Dir(staticDir))))
 	}
 
-	app := route(&handler{tmpls, &txMgr{db}, newStringGener(), tzes})
+	if serveGRPC {
+		grpcServer := newGRPCServer(&h)
+		grpcWebServer := grpcweb.WrapServer(
+			grpcServer,
+			grpcweb.WithWebsockets(true),
+		)
+		app.Mount("/api/", http.StripPrefix("/api/", grpcWebServer))
+	}
 
 	return listenAndServe(ctx, addr, app)
+}
+
+func newGRPCServer(h *handler) *grpc.Server {
+	srvr := grpc.NewServer()
+	rvapi.RegisterRVerServer(srvr, h)
+	return srvr
 }
 
 func loadTimeZones(ctx context.Context, db *sql.DB) (s []string, err error) {

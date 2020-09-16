@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package rvapi;
+
+option go_package = "github.com/jwilner/rv/pkg/rvapi";
+
+service RVer {
+    rpc Create (CreateRequest) returns (CreateResponse);
+    rpc Overview (OverviewRequest) returns (OverviewResponse);
+}
+
+message OverviewRequest {
+}
+
+message OverviewResponse {
+    repeated Election elections = 1;
+}
+
+message CreateRequest {
+    string question = 1;
+    repeated string choices = 2;
+}
+
+message CreateResponse {
+    Election election = 1;
+}
+
+message Election {
+    string question = 1;
+    repeated string choices = 2;
+    string key = 3;
+    string ballot_key = 4;
+}
+
