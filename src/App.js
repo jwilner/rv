@@ -160,7 +160,7 @@ function ElectionOverviewCard() {
 
 export default function App() {
     return (
-        <Router>
+        <Router basename={window.location.pathname.startsWith("/react") ? "/react" : ""}>
             <Switch>
                 <Route exact path="/"><IndexView/></Route>
                 <Route path="/v/:ballotKey"><VoteView/></Route>
@@ -342,10 +342,8 @@ function ManageElectionCard({election, setElection}) {
             function setFlag() {
                 const flags = new ModifyFlags();
                 if (flagSet) {
-                    console.log("removing", flag, name)
                     flags.addRemove(flag);
                 } else {
-                    console.log("adding", flag, name)
                     flags.addAdd(flag)
                 }
                 const req = new UpdateRequest()

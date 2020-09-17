@@ -85,7 +85,11 @@ func run(debug, serveGRPC bool, dbURL, addr, tmplDir, staticDir string) error {
 	app := route(&h)
 
 	if staticDir != "" {
-		app.Mount("/react/", http.StripPrefix("/react/", http.FileServer(http.Dir(staticDir))))
+		fs := http.FileSystem(http.Dir(staticDir))
+		if debug {
+			fs = &debugFileSystem{fs}
+		}
+		app.Mount("/react/", http.StripPrefix("/react/", http.FileServer(fs)))
 	}
 
 	if serveGRPC {
@@ -98,6 +102,18 @@ func run(debug, serveGRPC bool, dbURL, addr, tmplDir, staticDir string) error {
 	}
 
 	return listenAndServe(ctx, addr, app)
+}
+
+type debugFileSystem struct {
+	http.FileSystem
+}
+
+func (fs *debugFileSystem) Open(name string) (http.File, error) {
+	f, err := fs.FileSystem.Open(name)
+	if err != nil {
+		log.Printf("fs.Open(%v) = %v", name, err)
+	}
+	return f, err
 }
 
 func newGRPCServer(h *handler) *grpc.Server {
