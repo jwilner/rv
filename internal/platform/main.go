@@ -60,7 +60,20 @@ func buildMux(h *handler, staticDir string) *http.ServeMux {
 	mux.Handle("/api/", http.StripPrefix("/api/", grpcWebServer))
 
 	if staticDir != "" {
-		mux.Handle("/", http.FileServer(http.FileSystem(http.Dir(staticDir))))
+		fs := http.FileServer(http.Dir(staticDir))
+
+		mux.Handle("/static/", fs)
+
+		// any requests that come in at the following paths should be rewritten to be served
+		// the index and the frontend router.
+		mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			original := r.URL.Path
+
+			r.URL.Path = "/"
+			fs.ServeHTTP(w, r)
+
+			r.URL.Path = original
+		}))
 	}
 	return mux
 }
