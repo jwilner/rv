@@ -85,7 +85,7 @@ func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.Vote
 			return fmt.Errorf("model.Elections: %w", err)
 		}
 		if el.Close.Status == pgtype.Present && !el.Close.Time.After(time.Now()) {
-			return errors.New("election has already closed")
+			return fmt.Errorf("election has already closed: %v %v", el.Close.Time, time.Now())
 		}
 		if undefined := difference(norm, normalize(el.Choices)); len(undefined) > 0 {
 			return fmt.Errorf("unknown choices: %v", strings.Join(undefined.raw(), ", "))
