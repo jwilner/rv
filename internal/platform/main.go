@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -50,7 +49,7 @@ func Run(debug bool, dbURL, addr, staticDir string) error {
 	if debug {
 		mux = logMiddleware(mux)
 	}
-	mux = requestIDer(ctx, mux)
+	mux = requestIDer(mux)
 
 	return listenAndServe(ctx, addr, mux)
 }
@@ -240,36 +239,9 @@ func listenAndServe(ctx context.Context, addr string, handler http.Handler) erro
 	}
 }
 
-func requestIDer(ctx context.Context, next http.Handler) http.Handler {
-	// rands aren't thread safe, so we'll buffer here.
-	requestIDs := make(chan string, 50)
-	go func() {
-		rnd := rand.New(rand.NewSource(time.Now().Unix()))
-
-		chrSet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")
-		l := uint8(len(chrSet))
-
-		buf := make([]byte, 20)
-		for {
-			_, _ = rnd.Read(buf)
-			for i := range buf {
-				buf[i] = chrSet[buf[i]%l]
-			}
-			select {
-			case requestIDs <- string(buf):
-			case <-ctx.Done():
-				close(requestIDs)
-				return
-			}
-		}
-	}()
-
+func requestIDer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		select {
-		case <-ctx.Done():
-		case reqID := <-requestIDs:
-			r = r.WithContext(context.WithValue(r.Context(), requestIDKey, reqID))
-		}
+		r = r.WithContext(context.WithValue(r.Context(), requestIDKey, r.Header.Get("X-Request-ID")))
 		next.ServeHTTP(w, r)
 	})
 }
