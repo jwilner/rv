@@ -15,68 +15,9 @@ import {BrowserRouter as Router, Link, Route, Switch, useHistory, useParams} fro
 
 // is there a better way to do this?
 const client = new RVerPromiseClient(
-    `${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/`
+    `${window.location.protocol}//${window.location.hostname}:${window.location.port}/api`
 );
 
-function VotingWidget({choices, setChoices, setValid}) {
-    const [inFlightChoice, setInFlightChoice] = useState(""),
-        [inflightChoiceError, setInFlightChoiceError] = useState("");
-
-    function handleInFlightChoice(choice) {
-        if (choice === "") {
-            setInFlightChoiceError("")
-            setValid(true)
-        } else if (choices.find(c => c.toLowerCase() === choice.toLowerCase())) {
-            setInFlightChoiceError(`${choice} has already been provided`)
-            setValid(false)
-        }
-        setInFlightChoice(choice)
-    }
-
-    function addValue() {
-        if (inflightChoiceError) {
-            return
-        }
-        setChoices([...choices, inFlightChoice])
-        setInFlightChoice("")
-    }
-
-    function removeValue(idx) {
-        setChoices([...choices.slice(0, idx), ...choices.slice(idx + 1)])
-    }
-
-    return (
-        <Fragment>
-            {choices.map((ch, idx) =>
-                <div key={idx} className="input-group">
-                    <label className="input-group-label">{idx + 1}.</label>
-                    <input
-                        name={`choice[${idx}]`}
-                        className="input-group-field"
-                        type="text"
-                        value={ch}
-                        readOnly/>
-                    <div className="input-group-button">
-                        <button className="button" onClick={() => removeValue(idx)}>-</button>
-                    </div>
-                </div>
-            )}
-            <ErrorSpan message={inflightChoiceError}/>
-            <div className="input-group">
-                <label className="input-group-label">{choices.length + 1}.</label>
-                <input
-                    className="input-group-field"
-                    type="text"
-                    onChange={ev => handleInFlightChoice(ev.target.value)}
-                    value={inFlightChoice}
-                    placeholder="Add a choice"/>
-                <div className="input-group-button">
-                    <button className="button" onClick={addValue} disabled={!!inflightChoiceError}>+</button>
-                </div>
-            </div>
-        </Fragment>
-    )
-}
 
 function CreateElectionForm() {
     const [question, setQuestion] = useState(""),
@@ -107,6 +48,67 @@ function CreateElectionForm() {
             .catch(resp => console.log(resp));
     }
 
+    function ChoicesWidget() {
+        const [inFlightChoice, setInFlightChoice] = useState(""),
+            [inflightChoiceError, setInFlightChoiceError] = useState("");
+
+        function handleInFlightChoice(choice) {
+            if (choice === "") {
+                setInFlightChoiceError("")
+                setWidgetValid(true)
+            } else if (choices.find(c => c.toLowerCase() === choice.toLowerCase())) {
+                setInFlightChoiceError(`${choice} has already been provided`)
+                setWidgetValid(false)
+            }
+            setInFlightChoice(choice)
+        }
+
+        function addValue() {
+            if (inflightChoiceError) {
+                return
+            }
+            setChoices([...choices, inFlightChoice])
+            setInFlightChoice("")
+        }
+
+        function removeValue(idx) {
+            setChoices([...choices.slice(0, idx), ...choices.slice(idx + 1)])
+        }
+
+        return (
+            <Fragment>
+                {choices.map((ch, idx) =>
+                    <div key={idx} className="input-group">
+                        <label className="input-group-label">{idx + 1}.</label>
+                        <input
+                            name={`choice[${idx}]`}
+                            className="input-group-field"
+                            type="text"
+                            value={ch}
+                            readOnly/>
+                        <div className="input-group-button">
+                            <button className="button" onClick={() => removeValue(idx)}>-</button>
+                        </div>
+                    </div>
+                )}
+                <ErrorSpan message={inflightChoiceError}/>
+                <div className="input-group">
+                    <label className="input-group-label">{choices.length + 1}.</label>
+                    <input
+                        className="input-group-field"
+                        type="text"
+                        onChange={ev => handleInFlightChoice(ev.target.value)}
+                        value={inFlightChoice}
+                        onKeyPress={e => e.key === 'Enter' && !inflightChoiceError && addValue()}
+                        placeholder="Add a choice"/>
+                    <div className="input-group-button">
+                        <button className="button" onClick={addValue} disabled={!!inflightChoiceError}>+</button>
+                    </div>
+                </div>
+            </Fragment>
+        )
+    }
+
     return (
         <div className="small-6 cell">
             <h3>Create a new ranked choice vote</h3>
@@ -116,7 +118,7 @@ function CreateElectionForm() {
                 onChange={ev => handleQuestion(ev.target.value)}
                 placeholder="Ask a question"
                 value={question}/>
-            <VotingWidget choices={choices} setChoices={setChoices} setValid={setWidgetValid}/>
+            <ChoicesWidget/>
             <button className="button success" onClick={submit} disabled={!valid()}>Create</button>
         </div>
     )
@@ -140,17 +142,29 @@ function ElectionOverviewCard() {
     }, []);
 
     if (electionsList) {
+        const now = new Date();
         return (
             <div className="small-6 cell card">
                 <h3>Recent votes!</h3>
                 <ul>
-                    {electionsList.map(e => (
-                        <li key={e.getBallotKey()}>
-                            <Link to={`/v/${e.getBallotKey()}`}>
-                                {e.getQuestion()} <span className="label success">Active</span>
-                            </Link>
-                        </li>
-                    ))}
+                    {electionsList.map(e => {
+                        if (isClosed(e, now)) {
+                            return (
+                                <li key={e.getBallotKey()}>
+                                    <Link to={`/r/${e.getBallotKey()}`}>
+                                        {e.getQuestion()} <span className="label">Closed</span>
+                                    </Link>
+                                </li>
+                            );
+                        }
+                        return (
+                            <li key={e.getBallotKey()}>
+                                <Link to={`/v/${e.getBallotKey()}`}>
+                                    {e.getQuestion()} <span className="label success">Active</span>
+                                </Link>
+                            </li>
+                        );
+                    })}
                 </ul>
             </div>
         )
@@ -160,7 +174,7 @@ function ElectionOverviewCard() {
 
 export default function App() {
     return (
-        <Router basename={window.location.pathname.startsWith("/react") ? "/react" : ""}>
+        <Router>
             <Switch>
                 <Route exact path="/"><IndexView/></Route>
                 <Route path="/v/:ballotKey"><VoteView/></Route>
@@ -179,7 +193,8 @@ function IndexView() {
 }
 
 function ElectionView() {
-    const {electionKey} = useParams(),
+    const now = new Date(),
+        {electionKey} = useParams(),
         [election, setElection] = useState(null),
         [getErr, setGetErr] = useState(null),
         [report, setReport] = useState(null),
@@ -213,13 +228,13 @@ function ElectionView() {
         return (
             <div>
                 <h2>{election.getQuestion()}</h2>
-                <ElectionCloseP election={election}/>
+                <ElectionCloseP election={election} now={now}/>
                 <p>
                     Link to vote: <Link
                     to={`/v/${election.getBallotKey()}`}>{`${windowBaseURL()}/v/${election.getBallotKey()}`}</Link>
                 </p>
                 <div className="grid-x grid-padding-x">
-                    <ReportCard report={report} election={election}/>
+                    <ReportCard report={report} election={election} now={now}/>
                     <ManageElectionCard election={election} setElection={setElection}/>
                 </div>
             </div>
@@ -376,7 +391,7 @@ function ManageElectionCard({election, setElection}) {
         <div className="small-6 card cell">
             <h3>Close</h3>
             <CloseSettings/>
-            <h3>Flags</h3>
+            <h3>Options</h3>
             <FlagSettings/>
         </div>
     )
@@ -392,8 +407,7 @@ function isClosed(election, now) {
     return election.getClose() && election.getClose().toDate() <= now;
 }
 
-function ElectionCloseP({election}) {
-    const now = new Date();
+function ElectionCloseP({election, now}) {
     if (isCloseScheduled(election, now)) {
         return <p>Ends at {formatDate(election.getClose().toDate())}</p>
     } else if (isClosed(election, now)) {
@@ -415,12 +429,13 @@ function formatDate(date) {
     }).format(date)
 }
 
-function ReportCard({report, election}) {
+function ReportCard({report, election, now}) {
+
     return (
         <div className="small-6 card cell">
             {report.getWinner() ?
                 <strong>Winner: {report.getWinner()}</strong> :
-                <em>No winner yet</em>}
+                <em>No winner {!isClosed(election, now) ? <Fragment>yet</Fragment> : <Fragment/>}</em>}
             <ul>
                 {election.getChoicesList().map(ch =>
                     <li key={ch}>{ch}</li>)}
@@ -445,9 +460,8 @@ function VoteView() {
 
         [name, setName] = useState(""),
 
-        [choices, setChoices] = useState([]),
-
-        [widgetValid, setWidgetValid] = useState(true),
+        [selections, setSelections] = useState([]),
+        [inFlightSelection, setInFlightSelection] = useState(""),
 
         history = useHistory();
 
@@ -456,17 +470,6 @@ function VoteView() {
             .then(resp => setElection(resp.getElection()))
             .catch(setGetErr)
     }, [ballotKey, getErr]);
-
-    function submit() {
-        const req = new VoteRequest()
-            .setBallotkey(ballotKey)
-            .setName(name)
-            .setChoicesList(choices);
-
-        client.vote(req)
-            .then(() => history.push(`/r/${ballotKey}`))
-            .catch(resp => console.log(resp));
-    }
 
     if (getErr) {
         return (
@@ -480,30 +483,100 @@ function VoteView() {
                 <h3>loading ... </h3>
             </div>
         )
-    } else {
+    }
+    const available = election.getChoicesList().filter(o => selections.indexOf(o) === -1)
+
+    function addSelection(selection) {
+        setSelections([...selections, selection])
+    }
+
+    function removeSelection(idx) {
+        setSelections([...selections.slice(0, idx), ...selections.slice(idx + 1)])
+    }
+
+    function submit() {
+        const req = new VoteRequest()
+            .setBallotkey(ballotKey)
+            .setName(name)
+            .setChoicesList(selections);
+
+        client.vote(req)
+            .then(() => history.push(`/r/${ballotKey}`))
+            .catch(resp => console.log(resp));
+    }
+
+    function SelectionList() {
         return (
-            <div className="grid-x grid-padding-x">
-                <div className="small-6 cell">
-                    <strong>{election.getQuestion()}</strong>
-                    <ul>
-                        {election.getChoicesList().map(ch => <li key={ch}>{ch}</li>)}
-                    </ul>
-                </div>
-                <div className="small-6 cell card">
-                    <label>
-                        Please enter your name:
-                        <input type="text" name="name" value={name} onChange={(e) => setName(e.target.value)}/>
-                    </label>
-                    <VotingWidget choices={choices} setChoices={setChoices} setValid={setWidgetValid}/>
-                    <button className="button success" onClick={submit} disabled={name && !widgetValid}>Create</button>
+            <Fragment>
+                {selections.map((selection, idx) =>
+                    <div key={idx} className="input-group">
+                        <label className="input-group-label">{idx + 1}.</label>
+                        <input
+                            className="input-group-field"
+                            type="text"
+                            value={selection}
+                            readOnly/>
+                        <div className="input-group-button">
+                            <button className="button" onClick={() => removeSelection(idx)}>-</button>
+                        </div>
+                    </div>
+                )}
+            </Fragment>
+        )
+    }
+
+    function SelectionWidget() {
+        if (available.length === 0) {
+            return <Fragment/>
+        }
+        return (
+            <div className="input-group">
+                <select
+                    className="input-group-field"
+                    onChange={(e) => setInFlightSelection(e.target.value)}
+                    value={inFlightSelection}>
+                    <option/>
+                    {available.map((avail, idx) =>
+                        <option key={idx} value={avail}>{avail}</option>
+                    )}
+                </select>
+                <div className="input-group-button">
+                    <button
+                        className="button"
+                        disabled={!inFlightSelection}
+                        onClick={() => addSelection(inFlightSelection)}>+
+                    </button>
                 </div>
             </div>
         )
     }
+
+    return (
+        <div className="grid-x grid-padding-x">
+            <div className="small-6 cell">
+                <strong>{election.getQuestion()}</strong>
+                <ul>
+                    {election.getChoicesList().map(ch => <li key={ch}>{ch}</li>)}
+                </ul>
+            </div>
+            <div className="small-6 cell card">
+                <label>
+                    Please enter your name:
+                    <input type="text" name="name" value={name} onChange={(e) => setName(e.target.value)}/>
+                </label>
+                <label>Rank your choices</label>
+                <SelectionList/>
+                <SelectionWidget/>
+                <button className="button success" onClick={submit} disabled={!name}>Create</button>
+            </div>
+        </div>
+    )
 }
 
 function ReportView() {
-    const {ballotKey} = useParams(),
+    // TODO only load the report when needed; backend should also block.
+    const now = new Date(),
+        {ballotKey} = useParams(),
         [election, setElection] = useState(null),
         [getErr, setGetErr] = useState(null),
         [report, setReport] = useState(null),
@@ -535,16 +608,31 @@ function ReportView() {
             <h3>failed loading ... </h3>
         )
     } else {
+        function ObscuredReportCard() {
+            if (!isClosed(election, now) && election.getFlagsList().indexOf(Election.Flag.RESULTS_HIDDEN) >= 0) {
+                return (
+                    <div className="small-6 card cell">
+                        <em>Results hidden until voting is completed.</em>
+                    </div>
+                )
+            }
+            return <ReportCard report={report} election={election} now={now}/>
+        }
+
+
         return (
             <div>
                 <h2>{election.getQuestion()}</h2>
-                <ElectionCloseP election={election}/>
-                <p>
-                    Link to vote: <Link
-                    to={`/v/${election.getBallotKey()}`}>{`${windowBaseURL()}/v/${election.getBallotKey()}`}</Link>
-                </p>
+                <ElectionCloseP election={election} now={now}/>
+                {!isClosed(election, now) ?
+                    <p>
+                        Link to vote: <Link
+                        to={`/v/${election.getBallotKey()}`}>{`${windowBaseURL()}/v/${election.getBallotKey()}`}</Link>
+                    </p> :
+                    <Fragment/>
+                }
                 <div className="grid-x grid-padding-x">
-                    <ReportCard report={report} election={election}/>
+                    <ObscuredReportCard/>
                 </div>
             </div>
         )

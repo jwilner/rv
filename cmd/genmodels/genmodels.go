@@ -39,6 +39,7 @@ func main() {
 		"--no-hooks",
 		"--no-tests",
 		"--wipe",
+		"--output=internal/models",
 	)
 	cmd.Env = []string{
 		"PSQL_DBNAME=" + strings.Trim(u.Path, "/"),
