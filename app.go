@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/jwilner/rv/pkg/pb/rvapi"
 	"log"
 	"net/http"
+
+	"github.com/jwilner/rv/pkg/pb/rvapi"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"

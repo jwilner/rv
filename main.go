@@ -5,9 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	"github.com/jwilner/rv/pkg/pb/rvapi"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"net/http"
@@ -15,6 +12,11 @@ import (
 	"os/signal"
 	"strconv"
 	"time"
+
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"google.golang.org/grpc"
+
+	"github.com/jwilner/rv/pkg/pb/rvapi"
 
 	"github.com/jackc/pgtype"
 

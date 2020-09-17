@@ -2,11 +2,51 @@ syntax = "proto3";
 
 package rvapi;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/jwilner/rv/pkg/rvapi";
 
 service RVer {
     rpc Create (CreateRequest) returns (CreateResponse);
+    rpc Get (GetRequest) returns (GetResponse);
     rpc Overview (OverviewRequest) returns (OverviewResponse);
+    rpc Report (ReportRequest) returns (ReportResponse);
+    rpc Update (UpdateRequest) returns (UpdateResponse);
+
+    rpc Vote (VoteRequest) returns (VoteResponse);
+}
+
+message ReportRequest {
+    string key = 1;
+}
+
+message ReportResponse {
+    Report report = 1;
+}
+
+message Report {
+    string winner = 1;
+    repeated Round rounds = 2;
+}
+
+message RemainingVote {
+    string name = 1;
+    repeated string choices = 2;
+}
+
+message Round {
+    repeated string eliminated = 1;
+    repeated RemainingVote remaining = 2;
+    map<string, int32> counted = 3;
+}
+
+message GetRequest {
+    string key = 1;
+    string ballotKey = 2;
+}
+
+message GetResponse {
+    Election election = 1;
 }
 
 message OverviewRequest {
@@ -26,9 +66,49 @@ message CreateResponse {
 }
 
 message Election {
+    enum Flag {
+        UNKNOWN = 0;
+        PUBLIC = 1;
+        RESULTS_HIDDEN = 2;
+    }
+
     string question = 1;
     repeated string choices = 2;
     string key = 3;
     string ballot_key = 4;
+    google.protobuf.Timestamp close = 5;
+    repeated Flag flags = 6;
 }
 
+message SetClose {
+    google.protobuf.Timestamp close = 1;
+}
+message ModifyFlags {
+    repeated Election.Flag add = 1;
+    repeated Election.Flag remove = 2;
+}
+
+
+message UpdateRequest {
+    message Operation {
+        oneof operation {
+            SetClose set_close = 1;
+            ModifyFlags modify_flags = 2;
+        }
+    }
+    string key = 1;
+    repeated Operation operations = 2;
+}
+
+message UpdateResponse {
+    Election election = 1;
+}
+
+message VoteRequest {
+    string ballotKey = 1;
+    string name = 2;
+    repeated string choices = 3;
+}
+
+message VoteResponse {
+}

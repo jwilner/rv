@@ -4,16 +4,20 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/jwilner/rv/pkg/pb/rvapi"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/jackc/pgtype"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/jwilner/rv/pkg/pb/rvapi"
 
 	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -96,19 +100,40 @@ func (h *handler) Overview(ctx context.Context, _ *rvapi.OverviewRequest) (*rvap
 }
 
 func (e *election) proto() *rvapi.Election {
-	return &rvapi.Election{
+	el := rvapi.Election{
 		Question:  e.Question,
 		Choices:   e.Choices,
 		Key:       e.Key,
 		BallotKey: e.BallotKey,
 	}
+
+	if e.Close.Status == pgtype.Present {
+		var t time.Time
+		_ = e.Close.AssignTo(&t)
+		if closeTS, err := ptypes.TimestampProto(t); err == nil {
+			el.Close = closeTS
+		}
+	}
+
+	el.Flags = make([]rvapi.Election_Flag, 0, len(e.Flags))
+	for _, f := range e.Flags {
+		var fl rvapi.Election_Flag
+		switch f {
+		case electionFlagPublic:
+			fl = rvapi.Election_PUBLIC
+		case electionFlagResultsHidden:
+			fl = rvapi.Election_RESULTS_HIDDEN
+		}
+		el.Flags = append(el.Flags, fl)
+	}
+
+	return &el
 }
 
-func grpcValidate(req *rvapi.CreateRequest) (normalizedSlice, error) {
-	var details []proto.Message
-
-	norm := normalize(req.Choices)
-	if len(norm) == 0 {
+func validateChoices(
+	req interface{ GetChoices() []string },
+) (norm normalizedSlice, details []proto.Message) {
+	if norm = normalize(req.GetChoices()); len(norm) == 0 {
 		details = append(details, &errdetails.BadRequest_FieldViolation{
 			Field:       "Choices",
 			Description: "Cannot be empty",
@@ -129,6 +154,11 @@ func grpcValidate(req *rvapi.CreateRequest) (normalizedSlice, error) {
 		}
 		delete(counts, c.normalized)
 	}
+	return
+}
+
+func grpcValidate(req *rvapi.CreateRequest) (normalizedSlice, error) {
+	norm, details := validateChoices(req)
 
 	if len(req.Question) == 0 {
 		details = append(details, &errdetails.BadRequest_FieldViolation{

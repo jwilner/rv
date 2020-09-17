@@ -15,6 +15,8 @@
 const grpc = {};
 grpc.web = require('grpc-web');
 
+
+var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
 const proto = {};
 proto.rvapi = require('./rvapi_pb.js');
 
@@ -153,6 +155,86 @@ proto.rvapi.RVerPromiseClient.prototype.create =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.GetRequest,
+ *   !proto.rvapi.GetResponse>}
+ */
+const methodDescriptor_RVer_Get = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/Get',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.GetRequest,
+  proto.rvapi.GetResponse,
+  /**
+   * @param {!proto.rvapi.GetRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.GetResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.GetRequest,
+ *   !proto.rvapi.GetResponse>}
+ */
+const methodInfo_RVer_Get = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.GetResponse,
+  /**
+   * @param {!proto.rvapi.GetRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.GetResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.GetRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.GetResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.GetResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.get =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/Get',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_Get,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.GetRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.GetResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.get =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/Get',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_Get);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
  *   !proto.rvapi.OverviewRequest,
  *   !proto.rvapi.OverviewResponse>}
  */
@@ -227,6 +309,246 @@ proto.rvapi.RVerPromiseClient.prototype.overview =
       request,
       metadata || {},
       methodDescriptor_RVer_Overview);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.ReportRequest,
+ *   !proto.rvapi.ReportResponse>}
+ */
+const methodDescriptor_RVer_Report = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/Report',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.ReportRequest,
+  proto.rvapi.ReportResponse,
+  /**
+   * @param {!proto.rvapi.ReportRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.ReportResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.ReportRequest,
+ *   !proto.rvapi.ReportResponse>}
+ */
+const methodInfo_RVer_Report = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.ReportResponse,
+  /**
+   * @param {!proto.rvapi.ReportRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.ReportResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.ReportRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.ReportResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.ReportResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.report =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/Report',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_Report,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.ReportRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.ReportResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.report =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/Report',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_Report);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.UpdateRequest,
+ *   !proto.rvapi.UpdateResponse>}
+ */
+const methodDescriptor_RVer_Update = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/Update',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.UpdateRequest,
+  proto.rvapi.UpdateResponse,
+  /**
+   * @param {!proto.rvapi.UpdateRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.UpdateResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.UpdateRequest,
+ *   !proto.rvapi.UpdateResponse>}
+ */
+const methodInfo_RVer_Update = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.UpdateResponse,
+  /**
+   * @param {!proto.rvapi.UpdateRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.UpdateResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.UpdateRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.UpdateResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.UpdateResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.update =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/Update',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_Update,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.UpdateRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.UpdateResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.update =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/Update',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_Update);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.VoteRequest,
+ *   !proto.rvapi.VoteResponse>}
+ */
+const methodDescriptor_RVer_Vote = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/Vote',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.VoteRequest,
+  proto.rvapi.VoteResponse,
+  /**
+   * @param {!proto.rvapi.VoteRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.VoteResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.VoteRequest,
+ *   !proto.rvapi.VoteResponse>}
+ */
+const methodInfo_RVer_Vote = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.VoteResponse,
+  /**
+   * @param {!proto.rvapi.VoteRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.VoteResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.VoteRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.VoteResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.VoteResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.vote =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/Vote',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_Vote,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.VoteRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.VoteResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.vote =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/Vote',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_Vote);
 };
 
 

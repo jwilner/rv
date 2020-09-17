@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/jwilner/rv/pkg/pb/rvapi"
+
 	"github.com/jwilner/rv/models"
 )
 
@@ -46,6 +48,19 @@ type report struct {
 	Steps  []*step
 }
 
+func (r *report) proto() *rvapi.Report {
+	rep := rvapi.Report{
+		Winner: r.Winner,
+		Rounds: make([]*rvapi.Round, 0, len(r.Steps)),
+	}
+
+	for _, s := range r.Steps {
+		rep.Rounds = append(rep.Rounds, s.proto())
+	}
+
+	return &rep
+}
+
 type step struct {
 	Round      int
 	Eliminated []string
@@ -53,9 +68,28 @@ type step struct {
 	Counted    map[string]int
 }
 
+func (s *step) proto() *rvapi.Round {
+	r := rvapi.Round{
+		Eliminated: s.Eliminated,
+		Remaining:  make([]*rvapi.RemainingVote, 0, len(s.Remaining)),
+		Counted:    make(map[string]int32, len(s.Counted)),
+	}
+	for _, rv := range s.Remaining {
+		r.Remaining = append(r.Remaining, rv.proto())
+	}
+	for k, v := range s.Counted {
+		r.Counted[k] = int32(v)
+	}
+	return &r
+}
+
 type remainingVote struct {
 	Name    string
 	Choices []string
+}
+
+func (r *remainingVote) proto() *rvapi.RemainingVote {
+	return &rvapi.RemainingVote{Name: r.Name, Choices: r.Choices}
 }
 
 func calculateReport(vs []*models.Vote) *report {

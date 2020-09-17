@@ -11,6 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/jwilner/rv/pkg/pb/rvapi"
+
 	"github.com/jackc/pgtype"
 
 	"github.com/jackc/pgconn"
@@ -55,6 +61,45 @@ func (b *voteForm) validate() (normalizedSlice, bool) {
 	choices := parseChoices(b.Choices)
 	validateNonDupe(choices, &b.form)
 	return choices, b.checkErrors()
+}
+
+func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.VoteResponse, error) {
+	norm, details := validateChoices(req)
+	if req.Name == "" {
+		details = append(
+			details,
+			&errdetails.BadRequest_FieldViolation{Field: "Name", Description: "must not be empty"},
+		)
+	}
+	if len(details) > 0 {
+		s, err := status.New(codes.InvalidArgument, "Invalid vote").WithDetails(details...)
+		if err != nil {
+			panic(fmt.Sprintf("unexpected error: %v", err))
+		}
+		return nil, s.Err()
+	}
+
+	err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) (err error) {
+		var el *models.Election
+		if el, err = models.Elections(models.ElectionWhere.BallotKey.EQ(req.BallotKey)).One(ctx, tx); err != nil {
+			return fmt.Errorf("model.Elections: %w", err)
+		}
+		if el.Close.Status == pgtype.Present && !el.Close.Time.After(time.Now()) {
+			return errors.New("election has already closed")
+		}
+		if undefined := difference(norm, normalize(el.Choices)); len(undefined) > 0 {
+			return fmt.Errorf("unknown choices: %v", strings.Join(undefined.raw(), ", "))
+		}
+		v := models.Vote{
+			ElectionID: el.ID,
+			Name:       req.Name,
+			Choices:    norm.raw(),
+		}
+		_ = v.CreatedAt.Set(time.Now().UTC())
+
+		return v.Insert(ctx, tx, boil.Infer())
+	})
+	return &rvapi.VoteResponse{}, err
 }
 
 func (h *handler) getVote(w http.ResponseWriter, r *http.Request) {

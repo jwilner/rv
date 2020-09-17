@@ -3,12 +3,19 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"math/bits"
 	"net/http"
 	"net/url"
 	"time"
+
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/jwilner/rv/pkg/pb/rvapi"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
 
@@ -114,6 +121,56 @@ func (e *electionForm) validate(now time.Time) (eu electionUpdate) {
 	return
 }
 
+func (h *handler) Get(ctx context.Context, req *rvapi.GetRequest) (*rvapi.GetResponse, error) {
+	var el *models.Election
+	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
+		switch {
+		case req.Key != "":
+			if el, err = models.Elections(models.ElectionWhere.Key.EQ(req.Key)).One(ctx, tx); err != nil {
+				return fmt.Errorf("models.Elections key=%v: %w", req.Key, err)
+			}
+		case req.BallotKey != "":
+			if el, err = models.Elections(models.ElectionWhere.BallotKey.EQ(req.BallotKey)).One(ctx, tx); err != nil {
+				return fmt.Errorf("models.Elections ballotKey=%v: %w", req.BallotKey, err)
+			}
+		default:
+			err = errors.New("no valid key provided")
+		}
+		return
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		s, err := status.New(codes.NotFound, "election not found").WithDetails(
+			&errdetails.ResourceInfo{ResourceType: "Election", ResourceName: req.Key},
+		)
+		if err != nil {
+			panic(fmt.Sprintf("impossible outcome: %v", err))
+		}
+		err = s.Err()
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &rvapi.GetResponse{Election: newElection(el).proto()}, nil
+}
+
+func (h *handler) Report(ctx context.Context, req *rvapi.ReportRequest) (*rvapi.ReportResponse, error) {
+	var votes []*models.Vote
+	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
+		var el *models.Election
+		if el, err = models.Elections(models.ElectionWhere.Key.EQ(req.Key)).One(ctx, tx); err != nil {
+			return fmt.Errorf("models.Elections key=%v: %w", req.Key, err)
+		}
+		if votes, err = el.Votes().All(ctx, tx); err != nil {
+			return fmt.Errorf("Election.Votes byKey=%v: %w", req.Key, err)
+		}
+		return
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &rvapi.ReportResponse{Report: calculateReport(votes).proto()}, nil
+}
+
 func (h *handler) getElection(w http.ResponseWriter, r *http.Request) {
 	var (
 		el    *models.Election
@@ -137,6 +194,62 @@ func (h *handler) getElection(w http.ResponseWriter, r *http.Request) {
 		Zones:    h.tzes,
 		Now:      time.Now().UTC(),
 	})
+}
+
+func (h *handler) Update(ctx context.Context, req *rvapi.UpdateRequest) (*rvapi.UpdateResponse, error) {
+	var el *models.Election
+	err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) (err error) {
+		if el, err = models.Elections(models.ElectionWhere.Key.EQ(req.Key)).One(ctx, tx); err != nil {
+			return fmt.Errorf("models.Elections key=%v: %w", keyParam(ctx), err)
+		}
+		var modifiedColumns []string
+		addToSet := func(c string) {
+			modifiedColumns = add(modifiedColumns, c)
+		}
+		for _, op := range req.Operations {
+			switch op := op.Operation.(type) {
+			case *rvapi.UpdateRequest_Operation_SetClose:
+				addToSet(models.ElectionColumns.Close)
+				if op.SetClose.Close == nil {
+					_ = el.Close.Set(nil) // unset
+					break
+				}
+				_ = el.Close.Set(op.SetClose.Close.AsTime())
+			case *rvapi.UpdateRequest_Operation_ModifyFlags:
+				addToSet(models.ElectionColumns.Flags)
+				for _, addFlag := range op.ModifyFlags.Add {
+					if flag := mapFlag(addFlag); flag != "" {
+						el.Flags = add(el.Flags, flag)
+					}
+				}
+				for _, remFlag := range op.ModifyFlags.Remove {
+					if flag := mapFlag(remFlag); flag != "" {
+						last := remove(el.Flags, flag)
+						el.Flags = el.Flags[:last]
+					}
+				}
+			}
+		}
+		if len(modifiedColumns) > 0 {
+			_, err = el.Update(ctx, tx, boil.Whitelist(modifiedColumns...))
+		}
+		return
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &rvapi.UpdateResponse{Election: newElection(el).proto()}, nil
+}
+
+func mapFlag(flag rvapi.Election_Flag) string {
+	switch flag {
+	case rvapi.Election_PUBLIC:
+		return electionFlagPublic
+	case rvapi.Election_RESULTS_HIDDEN:
+		return electionFlagResultsHidden
+	default:
+		return ""
+	}
 }
 
 func (h *handler) postElection(w http.ResponseWriter, r *http.Request) {
