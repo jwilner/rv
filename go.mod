@@ -7,7 +7,6 @@ go 1.14
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/friendsofgo/errors v0.9.2
-	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/golang-migrate/migrate/v4 v4.11.0
 	github.com/golang/protobuf v1.4.2
 	github.com/improbable-eng/grpc-web v0.13.0
