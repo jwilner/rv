@@ -13,15 +13,13 @@ import (
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	_ "github.com/jackc/pgx/v4/stdlib" // register driver
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"google.golang.org/grpc"
-
 	"github.com/jwilner/rv/pkg/pb/rvapi"
-
-	_ "github.com/jackc/pgx/v4/stdlib" // register driver
 )
 
 // Run runs the application, connecting to the database at dbURL and listening for HTTP at the provided address.
