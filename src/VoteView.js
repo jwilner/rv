@@ -104,14 +104,14 @@ export function VoteView() {
     }
 
     return (
-        <div className="grid-x grid-padding-x">
-            <div className="small-6 cell">
+        <div className="grid-x grid-padding-x small-up-1 medium-up-2">
+            <div className="cell">
                 <strong>{election.getQuestion()}</strong>
                 <ul>
                     {election.getChoicesList().map(ch => <li key={ch}>{ch}</li>)}
                 </ul>
             </div>
-            <div className="small-6 cell card">
+            <div className="cell card">
                 <label>
                     Please enter your name:
                     <input type="text" name="name" value={name} onChange={(e) => setName(e.target.value)}/>

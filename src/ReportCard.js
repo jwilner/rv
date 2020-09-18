@@ -3,7 +3,7 @@ import {isClosed} from "./dates";
 
 export function ReportCard({report, election, now}) {
     return (
-        <div className="small-6 card cell">
+        <div className="cell card">
             {report.getWinner() ?
                 <strong>Winner: {report.getWinner()}</strong> :
                 <em>No winner {!isClosed(election, now) ? <Fragment>yet</Fragment> : <Fragment/>}</em>}

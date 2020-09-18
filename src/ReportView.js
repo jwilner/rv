@@ -46,7 +46,7 @@ export function ReportView() {
         function ObscuredReportCard() {
             if (!isClosed(election, now) && election.getFlagsList().indexOf(Election.Flag.RESULTS_HIDDEN) >= 0) {
                 return (
-                    <div className="small-6 card cell">
+                    <div className="cell card">
                         <em>Results hidden until voting is completed.</em>
                     </div>
                 )
@@ -54,21 +54,20 @@ export function ReportView() {
             return <ReportCard report={report} election={election} now={now}/>
         }
 
-
         return (
-            <div>
-                <h2>{election.getQuestion()}</h2>
-                <ElectionCloseP election={election} now={now}/>
-                {!isClosed(election, now) ?
-                    <p>
-                        Link to vote: <Link
-                        to={`/v/${election.getBallotKey()}`}>{`${windowBaseURL}/v/${election.getBallotKey()}`}</Link>
-                    </p> :
-                    <Fragment/>
-                }
-                <div className="grid-x grid-padding-x">
-                    <ObscuredReportCard/>
+            <div className="grid-x grid-padding-x small-up-1 medium-up-2">
+                <div className="cell">
+                    <h2>{election.getQuestion()}</h2>
+                    <ElectionCloseP election={election} now={now}/>
+                    {!isClosed(election, now) ?
+                        <p>
+                            Link to vote: <Link
+                            to={`/v/${election.getBallotKey()}`}>{`${windowBaseURL}/v/${election.getBallotKey()}`}</Link>
+                        </p> :
+                        <Fragment/>
+                    }
                 </div>
+                <ObscuredReportCard/>
             </div>
         )
     }

@@ -38,17 +38,17 @@ export function ElectionView() {
         )
     } else {
         return (
-            <div>
-                <h2>{election.getQuestion()}</h2>
-                <ElectionCloseP election={election} now={now}/>
-                <p>
-                    Link to vote: <Link
-                    to={`/v/${election.getBallotKey()}`}>{`${windowBaseURL}/v/${election.getBallotKey()}`}</Link>
-                </p>
-                <div className="grid-x grid-padding-x">
+            <div className="grid-x grid-padding-x small-up-1 medium-up-2">
+                <div className="cell">
+                    <h2>{election.getQuestion()}</h2>
+                    <ElectionCloseP election={election} now={now}/>
+                    <p>
+                        Link to vote: <Link
+                        to={`/v/${election.getBallotKey()}`}>{`${windowBaseURL}/v/${election.getBallotKey()}`}</Link>
+                    </p>
                     <ReportCard report={report} election={election} now={now}/>
-                    <ManageElectionCard election={election} setElection={setElection}/>
                 </div>
+                <ManageElectionCard election={election} setElection={setElection}/>
             </div>
         )
     }
@@ -197,7 +197,7 @@ function ManageElectionCard({election, setElection}) {
     }
 
     return (
-        <div className="small-6 card cell">
+        <div className="cell">
             <h3>Close</h3>
             <CloseSettings/>
             <h3>Options</h3>

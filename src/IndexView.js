@@ -6,9 +6,13 @@ import {ErrorSpan} from "./ErrorSpan";
 import {isClosed} from "./dates";
 
 export function IndexView() {
-    return <div className="grid-x grid-padding-x">
-        <CreateElectionForm/>
-        <ElectionOverviewCard/>
+    return <div className="grid-x grid-margin-x small-up-1 medium-up-2">
+        <div className="cell">
+            <CreateElectionForm/>
+        </div>
+        <div className="cell card">
+            <ElectionOverviewCard/>
+        </div>
     </div>
 }
 
@@ -105,7 +109,7 @@ function CreateElectionForm() {
     }
 
     return (
-        <div className="small-6 cell">
+        <Fragment>
             <h3>Create a new ranked choice vote</h3>
             <ErrorSpan message={questionError}/>
             <input
@@ -115,7 +119,7 @@ function CreateElectionForm() {
                 value={question}/>
             <ChoicesWidget/>
             <button className="button success" onClick={submit} disabled={!valid()}>Create</button>
-        </div>
+        </Fragment>
     )
 }
 
@@ -133,7 +137,7 @@ function ElectionOverviewCard() {
     if (electionsList) {
         const now = new Date();
         return (
-            <div className="small-6 cell card">
+            <Fragment>
                 <h3>Recent votes!</h3>
                 <ul>
                     {electionsList.map(e => {
@@ -155,8 +159,8 @@ function ElectionOverviewCard() {
                         );
                     })}
                 </ul>
-            </div>
+            </Fragment>
         )
     }
-    return <div className="small-6 cell card"><em>No recent votes</em></div>
+    return <em>No recent votes</em>
 }
