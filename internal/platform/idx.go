@@ -62,11 +62,6 @@ func validateChoices(
 	return
 }
 
-func grpcValidate(req *rvapi.CreateRequest) (normalizedSlice, error) {
-
-	return norm, nil
-}
-
 func loadElectionOverview(
 	ctx context.Context,
 	exec boil.ContextExecutor,
