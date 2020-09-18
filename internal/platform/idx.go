@@ -6,10 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/jwilner/rv/pkg/pb/rvapi"
 
@@ -39,8 +36,9 @@ func (h *handler) Overview(ctx context.Context, _ *rvapi.OverviewRequest) (*rvap
 
 func validateChoices(
 	req interface{ GetChoices() []string },
-) (norm normalizedSlice, details []proto.Message) {
-	if norm = normalize(req.GetChoices()); len(norm) == 0 {
+	permitZero bool,
+) (norm normalizedSlice, details []*errdetails.BadRequest_FieldViolation) {
+	if norm = normalize(req.GetChoices()); len(norm) == 0 && !permitZero {
 		details = append(details, &errdetails.BadRequest_FieldViolation{
 			Field:       "Choices",
 			Description: "Cannot be empty",
@@ -65,22 +63,6 @@ func validateChoices(
 }
 
 func grpcValidate(req *rvapi.CreateRequest) (normalizedSlice, error) {
-	norm, details := validateChoices(req)
-
-	if len(req.Question) == 0 {
-		details = append(details, &errdetails.BadRequest_FieldViolation{
-			Field:       "Question",
-			Description: "Cannot be empty",
-		})
-	}
-
-	if len(details) > 0 {
-		s, err := status.New(codes.InvalidArgument, "Invalid create request").WithDetails(details...)
-		if err != nil {
-			panic(fmt.Sprintf("failed to construct proper err: %v", err))
-		}
-		return nil, s.Err()
-	}
 
 	return norm, nil
 }

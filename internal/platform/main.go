@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -47,7 +48,7 @@ func Run(debug bool, dbURL, addr, staticDir string) error {
 	if debug {
 		mux = logMiddleware(mux)
 	}
-	mux = requestIDer(mux)
+	mux = requestIDer(ctx, mux)
 
 	return listenAndServe(ctx, addr, mux)
 }
@@ -250,9 +251,36 @@ func listenAndServe(ctx context.Context, addr string, handler http.Handler) erro
 	}
 }
 
-func requestIDer(next http.Handler) http.Handler {
+func requestIDer(ctx context.Context, next http.Handler) http.Handler {
+	// we'll have some buffered request ids ready to go if a proxy isn't setting request ids for us.
+	// wrap in a routine because rnd isn't safe.
+	requestIDs := make(chan string, 10)
+	go func() {
+		rnd := rand.New(rand.NewSource(time.Now().Unix()))
+		buf := make([]byte, 20)
+		chrSet := []byte("abcdefghijklmnopqrstuvwxyz012345679")
+		l := uint8(len(chrSet))
+		for {
+			_, _ = rnd.Read(buf) // cannot fail
+			for i := range buf {
+				buf[i] = chrSet[buf[i]%l]
+			}
+			select {
+			case requestIDs <- string(buf):
+			case <-ctx.Done():
+			}
+		}
+	}()
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r = r.WithContext(context.WithValue(r.Context(), requestIDKey, r.Header.Get("X-Request-ID")))
+		reqID := r.Header.Get("X-Request-ID")
+		if reqID == "" {
+			select {
+			case <-r.Context().Done():
+			case reqID = <-requestIDs:
+			}
+		}
+		r = r.WithContext(context.WithValue(r.Context(), requestIDKey, reqID))
 		next.ServeHTTP(w, r)
 	})
 }

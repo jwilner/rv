@@ -21,9 +21,19 @@ import (
 )
 
 func (h *handler) Create(ctx context.Context, request *rvapi.CreateRequest) (*rvapi.CreateResponse, error) {
-	norm, err := grpcValidate(request)
-	if err != nil {
-		return nil, err
+	norm, details := validateChoices(request, false)
+	if len(request.Question) == 0 {
+		details = append(details, &errdetails.BadRequest_FieldViolation{
+			Field:       "Question",
+			Description: "Cannot be empty",
+		})
+	}
+	if len(details) > 0 {
+		return nil, detailedErr(
+			codes.InvalidArgument,
+			"invalid create request",
+			&errdetails.BadRequest{FieldViolations: details},
+		)
 	}
 
 	e := &models.Election{
@@ -35,7 +45,7 @@ func (h *handler) Create(ctx context.Context, request *rvapi.CreateRequest) (*rv
 	_ = e.Close.Set(nil) // set null
 	_ = e.CreatedAt.Set(time.Now())
 
-	err = h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+	err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		return e.Insert(ctx, tx, boil.Infer())
 	})
 	if err != nil {

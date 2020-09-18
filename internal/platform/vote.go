@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
+
+	"github.com/golang/protobuf/proto"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -23,7 +24,7 @@ import (
 )
 
 func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.VoteResponse, error) {
-	norm, details := validateChoices(req)
+	norm, details := validateChoices(req, true)
 	if req.Name == "" {
 		details = append(
 			details,
@@ -31,23 +32,29 @@ func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.Vote
 		)
 	}
 	if len(details) > 0 {
-		s, err := status.New(codes.InvalidArgument, "Invalid vote").WithDetails(details...)
-		if err != nil {
-			panic(fmt.Sprintf("unexpected error: %v", err))
-		}
-		return nil, s.Err()
+		return nil, detailedErr(
+			codes.InvalidArgument,
+			"invalid fields",
+			&errdetails.BadRequest{
+				FieldViolations: details,
+			},
+		)
 	}
 
 	err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) (err error) {
 		var el *models.Election
 		if el, err = models.Elections(models.ElectionWhere.BallotKey.EQ(req.BallotKey)).One(ctx, tx); err != nil {
-			return fmt.Errorf("model.Elections: %w", err)
+			return detailedErr(codes.NotFound, "election not found", &errdetails.ResourceInfo{
+				ResourceType: "election",
+				ResourceName: req.BallotKey,
+				Description:  fmt.Sprintf("no election with ballot key %v", req.BallotKey),
+			})
 		}
 		if el.Close.Status == pgtype.Present && !el.Close.Time.After(time.Now()) {
-			return fmt.Errorf("election has already closed: %v %v", el.Close.Time, time.Now())
+			return detailedErr(codes.FailedPrecondition, "election has already closed")
 		}
 		if undefined := difference(norm, normalize(el.Choices)); len(undefined) > 0 {
-			return fmt.Errorf("unknown choices: %v", strings.Join(undefined.raw(), ", "))
+			return invalidArgument("unknown choices", "Choices", "unknown choices")
 		}
 		v := models.Vote{
 			ElectionID: el.ID,
@@ -59,12 +66,28 @@ func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.Vote
 		return v.Insert(ctx, tx, boil.Infer())
 	})
 	if isDupe(err, "vote_election_id_name_key") {
-		return nil, status.Error(codes.AlreadyExists, "name already used")
+		return nil, invalidArgument("name already used", "Name", "already used")
 	}
 	if err != nil {
 		return nil, err
 	}
 	return &rvapi.VoteResponse{}, nil
+}
+
+func invalidArgument(message string, fieldDescriptions ...string) error {
+	descs := make([]*errdetails.BadRequest_FieldViolation, 0, len(fieldDescriptions)/2)
+	for i := 0; i < len(fieldDescriptions); i += 2 {
+		descs = append(descs, &errdetails.BadRequest_FieldViolation{
+			Field:       fieldDescriptions[0],
+			Description: fieldDescriptions[1],
+		})
+	}
+	return detailedErr(codes.InvalidArgument, message, &errdetails.BadRequest{FieldViolations: descs})
+}
+
+func detailedErr(code codes.Code, msg string, deets ...proto.Message) error {
+	s, _ := status.New(code, msg).WithDetails(deets...)
+	return s.Err()
 }
 
 func isDupe(err error, constraintName string) bool {
