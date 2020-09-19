@@ -75,6 +75,86 @@ proto.rvapi.RVerPromiseClient =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.CheckInRequest,
+ *   !proto.rvapi.CheckInResponse>}
+ */
+const methodDescriptor_RVer_CheckIn = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/CheckIn',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.CheckInRequest,
+  proto.rvapi.CheckInResponse,
+  /**
+   * @param {!proto.rvapi.CheckInRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.CheckInResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.CheckInRequest,
+ *   !proto.rvapi.CheckInResponse>}
+ */
+const methodInfo_RVer_CheckIn = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.CheckInResponse,
+  /**
+   * @param {!proto.rvapi.CheckInRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.CheckInResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.CheckInRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.CheckInResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.CheckInResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.checkIn =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/CheckIn',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_CheckIn,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.CheckInRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.CheckInResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.checkIn =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/CheckIn',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_CheckIn);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
  *   !proto.rvapi.CreateRequest,
  *   !proto.rvapi.CreateResponse>}
  */

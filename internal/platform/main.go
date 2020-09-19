@@ -24,7 +24,7 @@ import (
 )
 
 // Run runs the application, connecting to the database at dbURL and listening for HTTP at the provided address.
-func Run(debug bool, dbURL, addr, staticDir string) error {
+func Run(debug bool, dbURL, addr, staticDir, signingKey string, tokLength time.Duration) error {
 	// construct an r ctx that we can cancel
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
@@ -34,7 +34,9 @@ func Run(debug bool, dbURL, addr, staticDir string) error {
 	// cancel it if interrupted
 	cancelOnSignal(ctx, cncl, os.Interrupt)
 
-	h, err := newHandler(ctx, dbURL)
+	tokM := &tokenManager{signingKey: []byte(signingKey)}
+
+	h, err := newHandler(ctx, tokM, dbURL, tokLength)
 	if err != nil {
 		return err
 	}
@@ -44,18 +46,19 @@ func Run(debug bool, dbURL, addr, staticDir string) error {
 		}
 	}()
 
-	mux := http.Handler(buildMux(h, staticDir))
+	mux := http.Handler(buildMux(h, tokM, staticDir))
 	if debug {
 		mux = logMiddleware(mux)
 	}
+	mux = tokenMiddleware(mux)
 	mux = requestIDer(ctx, mux)
 
 	return listenAndServe(ctx, addr, mux)
 }
 
-func buildMux(h *handler, staticDir string) *http.ServeMux {
+func buildMux(h *handler, tokM *tokenManager, staticDir string) *http.ServeMux {
 	mux := http.NewServeMux()
-	grpcWebServer := grpcweb.WrapServer(newGRPCServer(h), grpcweb.WithWebsockets(true))
+	grpcWebServer := grpcweb.WrapServer(newGRPCServer(tokM, h), grpcweb.WithWebsockets(true))
 	mux.Handle("/api/", http.StripPrefix("/api/", grpcWebServer))
 
 	if staticDir != "" {
@@ -77,8 +80,13 @@ func buildMux(h *handler, staticDir string) *http.ServeMux {
 	return mux
 }
 
-func newHandler(ctx context.Context, dbURL string) (*handler, error) {
-	h := handler{kGen: newStringGener()}
+func newHandler(
+	ctx context.Context,
+	tokM *tokenManager,
+	dbURL string,
+	tokenLife time.Duration,
+) (*handler, error) {
+	h := handler{kGen: newStringGener(), tokM: tokM, tokLife: tokenLife}
 	db, err := connectDB(ctx, dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to db: %w", err)
@@ -125,13 +133,23 @@ func logMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func newGRPCServer(h *handler) *grpc.Server {
-	srvr := grpc.NewServer(grpc.UnaryInterceptor(interceptor))
+func newGRPCServer(tokM *tokenManager, h *handler) *grpc.Server {
+	srvr := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			tokenInterceptor(tokM),
+			interceptor,
+		),
+	)
 	rvapi.RegisterRVerServer(srvr, h)
 	return srvr
 }
 
-func interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+func interceptor(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (resp interface{}, err error) {
 	t := time.Now()
 	resp, err = handler(ctx, req)
 	elapsed := int64(time.Since(t) / time.Millisecond)
@@ -139,20 +157,21 @@ func interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 	if err == nil {
 		if isDebug(ctx) {
 			log.Printf(
-				`request_id=%v rpc=%v elapsed_ms=%v msg="rpc success"`,
+				`request_id=%v user_id=%v rpc=%v elapsed_ms=%v msg="rpc success"`,
 				requestID(ctx),
+				userID(ctx),
 				info.FullMethod,
 				elapsed,
 			)
 		}
-
 		return
 	}
 
 	if s, ok := status.FromError(err); ok {
 		log.Printf(
-			`request_id=%v rpc=%v code=%d err=%q elapsed_ms=%v msg="rpc failure"`,
+			`request_id=%v user_id=%v rpc=%v code=%d err=%q elapsed_ms=%v msg="rpc failure"`,
 			requestID(ctx),
+			userID(ctx),
 			info.FullMethod,
 			s.Code(),
 			s.Message(),
@@ -173,8 +192,9 @@ func interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 		s, _ = s.WithDetails(&errdetails.DebugInfo{Detail: err.Error()})
 	}
 	log.Printf(
-		`request_id=%v rpc=%v code=%d err=%q original_err=%q elapsed_ms=%v msg="rpc failure"`,
+		`request_id=%v user_id=%v rpc=%v code=%d err=%q original_err=%q elapsed_ms=%v msg="rpc failure"`,
 		requestID(ctx),
+		userID(ctx),
 		info.FullMethod,
 		s.Code(),
 		s.Message(),

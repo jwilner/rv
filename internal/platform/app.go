@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/jwilner/rv/pkg/pb/rvapi"
 )
@@ -15,6 +16,9 @@ type handler struct {
 	txM  *txMgr
 	kGen *stringGener
 	tzes []string
+	tokM *tokenManager
+
+	tokLife time.Duration
 }
 
 var _ rvapi.RVerServer = new(handler)
@@ -73,6 +77,15 @@ const (
 	_ ctxKey = iota
 	debugKey
 	requestIDKey
+
+	// used for transporting claims about the current user
+	claimsKey
+
+	// used for sending cookie requests
+	cookieRequestKey
+
+	// used for getting out parsed cookie
+	parsedCookieKey
 )
 
 func setDebug(ctx context.Context, debug bool) context.Context {

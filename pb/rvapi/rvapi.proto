@@ -7,6 +7,8 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/jwilner/rv/pkg/rvapi";
 
 service RVer {
+    rpc CheckIn(CheckInRequest) returns (CheckInResponse);
+
     rpc Create (CreateRequest) returns (CreateResponse);
     rpc Get (GetRequest) returns (GetResponse);
     rpc Overview (OverviewRequest) returns (OverviewResponse);
@@ -14,6 +16,12 @@ service RVer {
     rpc Update (UpdateRequest) returns (UpdateResponse);
 
     rpc Vote (VoteRequest) returns (VoteResponse);
+}
+
+message CheckInRequest {
+}
+
+message CheckInResponse {
 }
 
 message ReportRequest {

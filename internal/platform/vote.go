@@ -66,7 +66,7 @@ func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.Vote
 		return v.Insert(ctx, tx, boil.Infer())
 	})
 	if isDupe(err, "vote_election_id_name_key") {
-		return nil, invalidArgument("name already used", "Name", "already used")
+		return nil, invalidArgument("value already used", "Name", "already used")
 	}
 	if err != nil {
 		return nil, err

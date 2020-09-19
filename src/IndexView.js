@@ -1,6 +1,6 @@
 import React, { Fragment, useContext, useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
-import { ClientContext } from "./context";
+import { CheckedInContext, ClientContext } from "./context";
 import { CreateRequest, OverviewRequest } from "./pb/rvapi/rvapi_pb";
 import { ErrorSpan } from "./ErrorSpan";
 import { isClosed } from "./dates";
@@ -143,15 +143,18 @@ function CreateElectionForm() {
 
 function ElectionOverviewCard() {
   const [electionsList, setElectionsList] = useState([]),
-    client = useContext(ClientContext);
+    client = useContext(ClientContext),
+    checkedIn = useContext(CheckedInContext);
 
-  // load overview on init
+  // load overview on init if checked in
   useEffect(() => {
-    client
-      .overview(new OverviewRequest())
-      .then((resp) => setElectionsList(resp.getElectionsList()))
-      .catch((resp) => console.log(resp));
-  }, [client]);
+    if (checkedIn) {
+      client
+        .overview(new OverviewRequest())
+        .then((resp) => setElectionsList(resp.getElectionsList()))
+        .catch((resp) => console.log(resp));
+    }
+  }, [client, checkedIn]);
 
   if (electionsList) {
     const now = new Date();
