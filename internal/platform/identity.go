@@ -2,16 +2,20 @@ package platform
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	"github.com/jwilner/rv/internal/models"
 	"github.com/jwilner/rv/pkg/pb/rvapi"
 )
 
@@ -44,12 +48,13 @@ func loadClaims(ctx context.Context) *Claims {
 	return c
 }
 
-func userID(ctx context.Context) string {
+func userID(ctx context.Context) int64 {
 	c := loadClaims(ctx)
 	if c == nil {
-		return ""
+		return 0
 	}
-	return c.Subject
+	i, _ := strconv.ParseInt(c.Subject, 16, 64)
+	return i
 }
 
 func tokenInterceptor(tokM *tokenManager) grpc.UnaryServerInterceptor {
@@ -85,6 +90,13 @@ func tokenInterceptor(tokM *tokenManager) grpc.UnaryServerInterceptor {
 
 type Claims struct {
 	jwt.StandardClaims
+}
+
+func (c *Claims) Valid() error {
+	if _, err := strconv.ParseInt(c.Subject, 16, 64); err != nil {
+		return jwt.NewValidationError("invalid subject", 0)
+	}
+	return c.StandardClaims.Valid()
 }
 
 func (h *handler) CheckIn(ctx context.Context, _ *rvapi.CheckInRequest) (*rvapi.CheckInResponse, error) {
@@ -129,8 +141,12 @@ func (h *handler) CheckIn(ctx context.Context, _ *rvapi.CheckInRequest) (*rvapi.
 	return &rvapi.CheckInResponse{}, nil
 }
 
-func (h *handler) newSubjectID(_ context.Context) (string, error) {
-	return h.kGen.newKey(keyCharSet, 20), nil
+func (h *handler) newSubjectID(ctx context.Context) (string, error) {
+	var u models.User
+	err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		return u.Insert(ctx, tx, boil.Infer())
+	})
+	return strconv.FormatInt(u.ID, 16), err
 }
 
 type cookieRequest struct {

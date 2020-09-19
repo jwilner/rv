@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import React, { Fragment, useContext, useEffect, useState } from "react";
 import { ClientContext, WindowBaseURLContext } from "./context";
-import { Election, GetRequest, ReportRequest } from "./pb/rvapi/rvapi_pb";
+import { Election, GetViewRequest, ReportRequest } from "./pb/rvapi/rvapi_pb";
 import { isClosed } from "./dates";
 import { ReportCard } from "./ReportCard";
 import { ElectionCloseP } from "./ElectionCloseP";
@@ -18,23 +18,20 @@ export function ReportView() {
     windowBaseURL = useContext(WindowBaseURLContext);
 
   useEffect(() => {
-    const req = new GetRequest();
-    req.setBallotkey(ballotKey);
     client
-      .get(req)
+      .getView(new GetViewRequest().setBallotKey(ballotKey))
       .then((resp) => setElection(resp.getElection()))
       .catch(setGetErr);
   }, [client, ballotKey, getErr]);
 
-  const electionKey = election && election.getKey();
   useEffect(() => {
-    if (electionKey) {
+    if (ballotKey) {
       client
-        .report(new ReportRequest().setKey(electionKey))
+        .report(new ReportRequest().setBallotKey(ballotKey))
         .then((resp) => setReport(resp.getReport()))
         .catch(setReportErr);
     }
-  }, [client, electionKey, reportErr]);
+  }, [client, ballotKey, reportErr]);
 
   if ((!election && !getErr) || (!report && !reportErr)) {
     // have not yet loaded

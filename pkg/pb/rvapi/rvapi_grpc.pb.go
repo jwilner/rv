@@ -20,6 +20,7 @@ type RVerClient interface {
 	CheckIn(ctx context.Context, in *CheckInRequest, opts ...grpc.CallOption) (*CheckInResponse, error)
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetView(ctx context.Context, in *GetViewRequest, opts ...grpc.CallOption) (*GetViewResponse, error)
 	Overview(ctx context.Context, in *OverviewRequest, opts ...grpc.CallOption) (*OverviewResponse, error)
 	Report(ctx context.Context, in *ReportRequest, opts ...grpc.CallOption) (*ReportResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
@@ -55,6 +56,15 @@ func (c *rVerClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc
 func (c *rVerClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, "/rvapi.RVer/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rVerClient) GetView(ctx context.Context, in *GetViewRequest, opts ...grpc.CallOption) (*GetViewResponse, error) {
+	out := new(GetViewResponse)
+	err := c.cc.Invoke(ctx, "/rvapi.RVer/GetView", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +114,7 @@ type RVerServer interface {
 	CheckIn(context.Context, *CheckInRequest) (*CheckInResponse, error)
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetView(context.Context, *GetViewRequest) (*GetViewResponse, error)
 	Overview(context.Context, *OverviewRequest) (*OverviewResponse, error)
 	Report(context.Context, *ReportRequest) (*ReportResponse, error)
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
@@ -123,6 +134,9 @@ func (*UnimplementedRVerServer) Create(context.Context, *CreateRequest) (*Create
 }
 func (*UnimplementedRVerServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (*UnimplementedRVerServer) GetView(context.Context, *GetViewRequest) (*GetViewResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetView not implemented")
 }
 func (*UnimplementedRVerServer) Overview(context.Context, *OverviewRequest) (*OverviewResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Overview not implemented")
@@ -192,6 +206,24 @@ func _RVer_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RVerServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RVer_GetView_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetViewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RVerServer).GetView(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rvapi.RVer/GetView",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RVerServer).GetView(ctx, req.(*GetViewRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -283,6 +315,10 @@ var _RVer_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _RVer_Get_Handler,
+		},
+		{
+			MethodName: "GetView",
+			Handler:    _RVer_GetView_Handler,
 		},
 		{
 			MethodName: "Overview",

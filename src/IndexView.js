@@ -151,7 +151,7 @@ function ElectionOverviewCard() {
     if (checkedIn) {
       client
         .overview(new OverviewRequest())
-        .then((resp) => setElectionsList(resp.getElectionsList()))
+        .then((resp) => setElectionsList(resp.getPublicElectionsList()))
         .catch((resp) => console.log(resp));
     }
   }, [client, checkedIn]);

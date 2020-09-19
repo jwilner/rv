@@ -41,6 +41,7 @@ func (h *handler) Create(ctx context.Context, request *rvapi.CreateRequest) (*rv
 		BallotKey: h.kGen.newKey(keyCharSet, 8),
 		Question:  request.Question,
 		Choices:   norm.raw(),
+		UserID:    userID(ctx),
 	}
 	_ = e.Close.Set(nil) // set null
 	_ = e.CreatedAt.Set(time.Now())
@@ -57,17 +58,8 @@ func (h *handler) Create(ctx context.Context, request *rvapi.CreateRequest) (*rv
 func (h *handler) Get(ctx context.Context, req *rvapi.GetRequest) (*rvapi.GetResponse, error) {
 	var el *models.Election
 	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
-		switch {
-		case req.Key != "":
-			if el, err = models.Elections(models.ElectionWhere.Key.EQ(req.Key)).One(ctx, tx); err != nil {
-				return fmt.Errorf("models.Elections key=%v: %w", req.Key, err)
-			}
-		case req.BallotKey != "":
-			if el, err = models.Elections(models.ElectionWhere.BallotKey.EQ(req.BallotKey)).One(ctx, tx); err != nil {
-				return fmt.Errorf("models.Elections ballotKey=%v: %w", req.BallotKey, err)
-			}
-		default:
-			err = errors.New("no valid key provided")
+		if el, err = models.Elections(models.ElectionWhere.Key.EQ(req.Key)).One(ctx, tx); err != nil {
+			return fmt.Errorf("models.Elections key=%v: %w", req.Key, err)
 		}
 		return
 	})
@@ -84,6 +76,29 @@ func (h *handler) Get(ctx context.Context, req *rvapi.GetRequest) (*rvapi.GetRes
 		return nil, err
 	}
 	return &rvapi.GetResponse{Election: protoElection(el)}, nil
+}
+
+func (h *handler) GetView(ctx context.Context, req *rvapi.GetViewRequest) (*rvapi.GetViewResponse, error) {
+	var el *models.Election
+	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
+		if el, err = models.Elections(models.ElectionWhere.BallotKey.EQ(req.BallotKey)).One(ctx, tx); err != nil {
+			return fmt.Errorf("models.Elections ballotKey=%v: %w", req.BallotKey, err)
+		}
+		return
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		s, err := status.New(codes.NotFound, "election not found").WithDetails(
+			&errdetails.ResourceInfo{ResourceType: "Election", ResourceName: req.BallotKey},
+		)
+		if err != nil {
+			panic(fmt.Sprintf("impossible outcome: %v", err))
+		}
+		err = s.Err()
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &rvapi.GetViewResponse{Election: protoElectionView(el)}, nil
 }
 
 func (h *handler) Update(ctx context.Context, req *rvapi.UpdateRequest) (*rvapi.UpdateResponse, error) {
@@ -183,6 +198,36 @@ func add(haystack []string, needle string) []string {
 		return haystack
 	}
 	return append(haystack, needle)
+}
+
+func protoElectionView(e *models.Election) *rvapi.ElectionView {
+	el := rvapi.ElectionView{
+		Question:  e.Question,
+		Choices:   e.Choices,
+		BallotKey: e.BallotKey,
+	}
+
+	if e.Close.Status == pgtype.Present {
+		var t time.Time
+		_ = e.Close.AssignTo(&t)
+		if closeTS, err := ptypes.TimestampProto(t); err == nil {
+			el.Close = closeTS
+		}
+	}
+
+	el.Flags = make([]rvapi.Election_Flag, 0, len(e.Flags))
+	for _, f := range e.Flags {
+		var fl rvapi.Election_Flag
+		switch f {
+		case electionFlagPublic:
+			fl = rvapi.Election_PUBLIC
+		case electionFlagResultsHidden:
+			fl = rvapi.Election_RESULTS_HIDDEN
+		}
+		el.Flags = append(el.Flags, fl)
+	}
+
+	return &el
 }
 
 func protoElection(e *models.Election) *rvapi.Election {

@@ -315,6 +315,86 @@ proto.rvapi.RVerPromiseClient.prototype.get =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.GetViewRequest,
+ *   !proto.rvapi.GetViewResponse>}
+ */
+const methodDescriptor_RVer_GetView = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/GetView',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.GetViewRequest,
+  proto.rvapi.GetViewResponse,
+  /**
+   * @param {!proto.rvapi.GetViewRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.GetViewResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.GetViewRequest,
+ *   !proto.rvapi.GetViewResponse>}
+ */
+const methodInfo_RVer_GetView = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.GetViewResponse,
+  /**
+   * @param {!proto.rvapi.GetViewRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.GetViewResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.GetViewRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.GetViewResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.GetViewResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.getView =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/GetView',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_GetView,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.GetViewRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.GetViewResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.getView =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/GetView',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_GetView);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
  *   !proto.rvapi.OverviewRequest,
  *   !proto.rvapi.OverviewResponse>}
  */

@@ -14,8 +14,14 @@ func (h *handler) Report(ctx context.Context, req *rvapi.ReportRequest) (*rvapi.
 	var votes []*models.Vote
 	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
 		var el *models.Election
-		if el, err = models.Elections(models.ElectionWhere.Key.EQ(req.Key)).One(ctx, tx); err != nil {
-			return fmt.Errorf("models.Elections key=%v: %w", req.Key, err)
+		if req.Key != "" {
+			if el, err = models.Elections(models.ElectionWhere.Key.EQ(req.Key)).One(ctx, tx); err != nil {
+				return fmt.Errorf("models.Elections key=%v: %w", req.Key, err)
+			}
+		} else {
+			if el, err = models.Elections(models.ElectionWhere.BallotKey.EQ(req.BallotKey)).One(ctx, tx); err != nil {
+				return fmt.Errorf("models.Elections ballotKey=%v: %w", req.BallotKey, err)
+			}
 		}
 		if votes, err = el.Votes().All(ctx, tx); err != nil {
 			return fmt.Errorf("Election.Votes byKey=%v: %w", req.Key, err)

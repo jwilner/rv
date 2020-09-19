@@ -35,6 +35,7 @@ type Election struct {
 	Close     pgtype.Timestamptz `boil:"close" json:"close,omitempty" toml:"close" yaml:"close,omitempty"`
 	CloseTZ   null.String        `boil:"close_tz" json:"close_tz,omitempty" toml:"close_tz" yaml:"close_tz,omitempty"`
 	Flags     types.StringArray  `boil:"flags" json:"flags" toml:"flags" yaml:"flags"`
+	UserID    int64              `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
 
 	R *electionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L electionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -50,6 +51,7 @@ var ElectionColumns = struct {
 	Close     string
 	CloseTZ   string
 	Flags     string
+	UserID    string
 }{
 	ID:        "id",
 	Key:       "key",
@@ -60,6 +62,7 @@ var ElectionColumns = struct {
 	Close:     "close",
 	CloseTZ:   "close_tz",
 	Flags:     "flags",
+	UserID:    "user_id",
 }
 
 // Generated where
@@ -185,6 +188,7 @@ var ElectionWhere = struct {
 	Close     whereHelperpgtype_Timestamptz
 	CloseTZ   whereHelpernull_String
 	Flags     whereHelpertypes_StringArray
+	UserID    whereHelperint64
 }{
 	ID:        whereHelperint64{field: "\"rv\".\"election\".\"id\""},
 	Key:       whereHelperstring{field: "\"rv\".\"election\".\"key\""},
@@ -195,17 +199,21 @@ var ElectionWhere = struct {
 	Close:     whereHelperpgtype_Timestamptz{field: "\"rv\".\"election\".\"close\""},
 	CloseTZ:   whereHelpernull_String{field: "\"rv\".\"election\".\"close_tz\""},
 	Flags:     whereHelpertypes_StringArray{field: "\"rv\".\"election\".\"flags\""},
+	UserID:    whereHelperint64{field: "\"rv\".\"election\".\"user_id\""},
 }
 
 // ElectionRels is where relationship names are stored.
 var ElectionRels = struct {
+	User  string
 	Votes string
 }{
+	User:  "User",
 	Votes: "Votes",
 }
 
 // electionR is where relationships are stored.
 type electionR struct {
+	User  *User     `boil:"User" json:"User" toml:"User" yaml:"User"`
 	Votes VoteSlice `boil:"Votes" json:"Votes" toml:"Votes" yaml:"Votes"`
 }
 
@@ -218,8 +226,8 @@ func (*electionR) NewStruct() *electionR {
 type electionL struct{}
 
 var (
-	electionAllColumns            = []string{"id", "key", "question", "choices", "created_at", "ballot_key", "close", "close_tz", "flags"}
-	electionColumnsWithoutDefault = []string{"key", "question", "choices", "created_at", "ballot_key", "close", "close_tz"}
+	electionAllColumns            = []string{"id", "key", "question", "choices", "created_at", "ballot_key", "close", "close_tz", "flags", "user_id"}
+	electionColumnsWithoutDefault = []string{"key", "question", "choices", "created_at", "ballot_key", "close", "close_tz", "user_id"}
 	electionColumnsWithDefault    = []string{"id", "flags"}
 	electionPrimaryKeyColumns     = []string{"id"}
 )
@@ -315,6 +323,20 @@ func (q electionQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 	return count > 0, nil
 }
 
+// User pointed to by the foreign key.
+func (o *Election) User(mods ...qm.QueryMod) userQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.UserID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Users(queryMods...)
+	queries.SetFrom(query.Query, "\"rv\".\"user\"")
+
+	return query
+}
+
 // Votes retrieves all the vote's Votes with an executor.
 func (o *Election) Votes(mods ...qm.QueryMod) voteQuery {
 	var queryMods []qm.QueryMod
@@ -334,6 +356,94 @@ func (o *Election) Votes(mods ...qm.QueryMod) voteQuery {
 	}
 
 	return query
+}
+
+// LoadUser allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (electionL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybeElection interface{}, mods queries.Applicator) error {
+	var slice []*Election
+	var object *Election
+
+	if singular {
+		object = maybeElection.(*Election)
+	} else {
+		slice = *maybeElection.(*[]*Election)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &electionR{}
+		}
+		args = append(args, object.UserID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &electionR{}
+			}
+
+			for _, a := range args {
+				if a == obj.UserID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.UserID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`rv.user`),
+		qm.WhereIn(`rv.user.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load User")
+	}
+
+	var resultSlice []*User
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice User")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for user")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user")
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.User = foreign
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.UserID == foreign.ID {
+				local.R.User = foreign
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadVotes allows an eager lookup of values, cached into the
@@ -412,6 +522,53 @@ func (electionL) LoadVotes(ctx context.Context, e boil.ContextExecutor, singular
 				break
 			}
 		}
+	}
+
+	return nil
+}
+
+// SetUser of the election to the related item.
+// Sets o.R.User to related.
+// Adds o to related.R.Elections.
+func (o *Election) SetUser(ctx context.Context, exec boil.ContextExecutor, insert bool, related *User) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"rv\".\"election\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+		strmangle.WhereClause("\"", "\"", 2, electionPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.UserID = related.ID
+	if o.R == nil {
+		o.R = &electionR{
+			User: related,
+		}
+	} else {
+		o.R.User = related
+	}
+
+	if related.R == nil {
+		related.R = &userR{
+			Elections: ElectionSlice{o},
+		}
+	} else {
+		related.R.Elections = append(related.R.Elections, o)
 	}
 
 	return nil

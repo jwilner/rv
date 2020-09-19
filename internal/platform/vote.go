@@ -60,6 +60,7 @@ func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.Vote
 			ElectionID: el.ID,
 			Name:       req.Name,
 			Choices:    norm.raw(),
+			UserID:     userID(ctx),
 		}
 		_ = v.CreatedAt.Set(time.Now().UTC())
 

@@ -11,6 +11,7 @@ service RVer {
 
     rpc Create (CreateRequest) returns (CreateResponse);
     rpc Get (GetRequest) returns (GetResponse);
+    rpc GetView (GetViewRequest) returns (GetViewResponse);
     rpc Overview (OverviewRequest) returns (OverviewResponse);
     rpc Report (ReportRequest) returns (ReportResponse);
     rpc Update (UpdateRequest) returns (UpdateResponse);
@@ -26,6 +27,7 @@ message CheckInResponse {
 
 message ReportRequest {
     string key = 1;
+    string ballot_key = 2;
 }
 
 message ReportResponse {
@@ -50,18 +52,27 @@ message Round {
 
 message GetRequest {
     string key = 1;
-    string ballotKey = 2;
 }
 
 message GetResponse {
     Election election = 1;
 }
 
+message GetViewRequest {
+    string ballot_key = 1;
+}
+
+message GetViewResponse {
+    ElectionView election = 1;
+}
+
 message OverviewRequest {
 }
 
 message OverviewResponse {
-    repeated Election elections = 1;
+    repeated ElectionView public_elections = 1;
+    repeated Election user_elections = 2;
+    repeated ElectionView user_votes = 3;
 }
 
 message CreateRequest {
@@ -88,6 +99,14 @@ message Election {
     repeated Flag flags = 6;
 }
 
+message ElectionView {
+    string question = 1;
+    repeated string choices = 2;
+    string ballot_key = 3;
+    google.protobuf.Timestamp close = 5;
+    repeated Election.Flag flags = 6;
+}
+
 message SetClose {
     google.protobuf.Timestamp close = 1;
 }
@@ -95,7 +114,6 @@ message ModifyFlags {
     repeated Election.Flag add = 1;
     repeated Election.Flag remove = 2;
 }
-
 
 message UpdateRequest {
     message Operation {
@@ -113,7 +131,7 @@ message UpdateResponse {
 }
 
 message VoteRequest {
-    string ballotKey = 1;
+    string ballot_key = 1;
     string name = 2;
     repeated string choices = 3;
 }

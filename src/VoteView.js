@@ -1,7 +1,7 @@
 import { useHistory, useParams } from "react-router-dom";
 import React, { Fragment, useContext, useEffect, useState } from "react";
 import { ClientContext } from "./context";
-import { GetRequest, VoteRequest } from "./pb/rvapi/rvapi_pb";
+import { GetViewRequest, VoteRequest } from "./pb/rvapi/rvapi_pb";
 import { Status } from "./pb/google/rpc/status_pb";
 import { BadRequest } from "./pb/google/rpc/error_details_pb";
 import { ErrorSpan } from "./ErrorSpan";
@@ -18,7 +18,7 @@ export function VoteView() {
 
   useEffect(() => {
     client
-      .get(new GetRequest().setBallotkey(ballotKey))
+      .getView(new GetViewRequest().setBallotKey(ballotKey))
       .then((resp) => setElection(resp.getElection()))
       .catch(setGetErr);
   }, [client, ballotKey, getErr]);
@@ -71,7 +71,7 @@ export function VoteView() {
 
   function submit() {
     const req = new VoteRequest()
-      .setBallotkey(ballotKey)
+      .setBallotKey(ballotKey)
       .setName(name)
       .setChoicesList(selections);
 

@@ -17,18 +17,20 @@ import (
 )
 
 func (h *handler) Overview(ctx context.Context, _ *rvapi.OverviewRequest) (*rvapi.OverviewResponse, error) {
-	var els []*models.Election
+	var public []*models.Election
 	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
-		els, err = loadElectionOverview(ctx, tx)
+		if public, err = loadElectionOverview(ctx, tx); err != nil {
+			return
+		}
 		return
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	resp := rvapi.OverviewResponse{Elections: make([]*rvapi.Election, 0, len(els))}
-	for _, el := range els {
-		resp.Elections = append(resp.Elections, protoElection(el))
+	resp := rvapi.OverviewResponse{PublicElections: make([]*rvapi.ElectionView, 0, len(public))}
+	for _, el := range public {
+		resp.PublicElections = append(resp.PublicElections, protoElectionView(el))
 	}
 
 	return &resp, nil

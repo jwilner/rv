@@ -5,8 +5,10 @@ package models
 
 var TableNames = struct {
 	Election string
+	User     string
 	Vote     string
 }{
 	Election: "election",
+	User:     "user",
 	Vote:     "vote",
 }
