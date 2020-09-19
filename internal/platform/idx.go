@@ -92,16 +92,22 @@ func validateChoices(
 func listVotedIn(ctx context.Context, exec boil.ContextExecutor, userID int64) (els []*models.Election, err error) {
 	err = queries.Raw(
 		`
-SELECT 
-	e.*
+SELECT
+	*
 FROM
 	rv.election e
-JOIN
-	rv.vote v
-ON
-	(v.election_id = e.id)
-WHERE
-	v.user_id = $1
+JOIN (
+	SELECT
+		v.election_id
+	FROM
+		rv.vote v
+	WHERE
+		v.user_id = $1
+	GROUP BY
+		v.election_id
+	ORDER BY
+		MAX(v.created_at) DESC -- order by most recently created
+) voted_in ON (e.id = voted_in.election_id)
 `,
 		userID,
 	).Bind(ctx, exec, &els)
@@ -122,7 +128,7 @@ func listPublic(
 ) (ms []*models.Election, err error) {
 	err = queries.Raw(
 		`
-SELECT 
+SELECT
 	*,
 	coalesce(close, 'infinity') > NOW() AS active,
 	CASE
@@ -131,7 +137,7 @@ SELECT
 		ELSE NULL
 	END AS distance
 FROM rv.election e
-WHERE 
+WHERE
 	'public' = ANY(e.flags)
 ORDER BY
 	active DESC,
