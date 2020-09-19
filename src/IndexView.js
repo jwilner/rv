@@ -11,10 +11,8 @@ import { isClosed } from "./dates";
 
 export function IndexView() {
   return (
-    <div className="grid-x grid-margin-x grid-padding-x small-up-1 medium-up-2">
-      <div className="cell">
-        <CreateElectionForm />
-      </div>
+    <div className="grid-x grid-margin-x grid-padding-y grid-padding-x small-up-1 medium-up-2">
+      <CreateElectionForm />
       <ElectionOverviewCard />
       <VotedInCard />
       <UserElectionsCard />
@@ -128,7 +126,7 @@ function CreateElectionForm() {
   }
 
   return (
-    <Fragment>
+    <div className="card cell">
       <h3>Create a new ranked choice vote</h3>
       <ErrorSpan message={questionError} />
       <input
@@ -141,7 +139,7 @@ function CreateElectionForm() {
       <button className="button success" onClick={submit} disabled={!valid()}>
         Create
       </button>
-    </Fragment>
+    </div>
   );
 }
 
@@ -164,36 +162,35 @@ function ElectionOverviewCard() {
     }
   }, [client, checkedIn]);
 
-  if (publicList) {
-    const now = new Date();
-    return (
-      <div className="card cell">
-        <h3>Recent votes!</h3>
-        <ul>
-          {publicList.map((e) => {
-            if (isClosed(e, now)) {
-              return (
-                <li key={e.getBallotKey()}>
-                  <Link to={`/r/${e.getBallotKey()}`}>
-                    {e.getQuestion()} <span className="label">Closed</span>
-                  </Link>
-                </li>
-              );
-            }
+  if (publicList.length === 0) {
+    return null;
+  }
+  const now = new Date();
+  return (
+    <div className="card cell">
+      <h3>Recent votes!</h3>
+      <ul>
+        {publicList.map((e) => {
+          if (isClosed(e, now)) {
             return (
               <li key={e.getBallotKey()}>
-                <Link to={`/v/${e.getBallotKey()}`}>
-                  {e.getQuestion()}{" "}
-                  <span className="label success">Active</span>
+                <Link to={`/r/${e.getBallotKey()}`}>
+                  {e.getQuestion()} <span className="label">Closed</span>
                 </Link>
               </li>
             );
-          })}
-        </ul>
-      </div>
-    );
-  }
-  return null;
+          }
+          return (
+            <li key={e.getBallotKey()}>
+              <Link to={`/v/${e.getBallotKey()}`}>
+                {e.getQuestion()} <span className="label success">Active</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
 
 function VotedInCard() {
@@ -215,29 +212,29 @@ function VotedInCard() {
     }
   }, [client, checkedIn]);
 
-  if (votedInList) {
-    const now = new Date();
-    return (
-      <div className="card cell">
-        <h3>Recent votes you cast!</h3>
-        <ul>
-          {votedInList.map((e) => (
-            <li key={e.getBallotKey()}>
-              <Link to={`/e/${e.getBallotKey()}`}>
-                {e.getQuestion()}{" "}
-                {isClosed(e, now) ? (
-                  <span className="label">Closed</span>
-                ) : (
-                  <span className="label success">Active</span>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
+  if (votedInList.length === 0) {
+    return null;
   }
-  return null;
+  const now = new Date();
+  return (
+    <div className="card cell">
+      <h3>Recent votes you cast!</h3>
+      <ul>
+        {votedInList.map((e) => (
+          <li key={e.getBallotKey()}>
+            <Link to={`/r/${e.getBallotKey()}`}>
+              {e.getQuestion()}{" "}
+              {isClosed(e, now) ? (
+                <span className="label">Closed</span>
+              ) : (
+                <span className="label success">Active</span>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function UserElectionsCard() {
@@ -257,29 +254,29 @@ function UserElectionsCard() {
     }
   }, [client, checkedIn]);
 
-  if (electionsList) {
-    const now = new Date();
-    return (
-      <div className="card cell">
-        <h3>Recent elections you started!</h3>
-        <ul>
-          {electionsList.map((e) => {
-            return (
-              <li key={e.getKey()}>
-                <Link to={`/e/${e.getKey()}`}>
-                  {e.getQuestion()}{" "}
-                  {isClosed(e, now) ? (
-                    <span className="label">Closed</span>
-                  ) : (
-                    <span className="label success">Active</span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    );
+  if (electionsList.length === 0) {
+    return null;
   }
-  return null;
+  const now = new Date();
+  return (
+    <div className="card cell">
+      <h3>Recent elections you started!</h3>
+      <ul>
+        {electionsList.map((e) => {
+          return (
+            <li key={e.getKey()}>
+              <Link to={`/e/${e.getKey()}`}>
+                {e.getQuestion()}{" "}
+                {isClosed(e, now) ? (
+                  <span className="label">Closed</span>
+                ) : (
+                  <span className="label success">Active</span>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
