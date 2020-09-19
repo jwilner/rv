@@ -6,34 +6,59 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/jwilner/rv/pkg/pb/rvapi"
-
-	"github.com/volatiletech/sqlboiler/queries"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-
 	"github.com/jwilner/rv/internal/models"
+	"github.com/jwilner/rv/pkg/pb/rvapi"
 )
 
-func (h *handler) Overview(ctx context.Context, _ *rvapi.OverviewRequest) (*rvapi.OverviewResponse, error) {
-	var public []*models.Election
-	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
-		if public, err = loadElectionOverview(ctx, tx); err != nil {
-			return
+func (h *handler) ListViews(ctx context.Context, req *rvapi.ListViewsRequest) (*rvapi.ListViewsResponse, error) {
+	var op func(context.Context, boil.ContextExecutor) ([]*models.Election, error)
+	switch req.Filter {
+	case rvapi.ListViewsRequest_PUBLIC:
+		op = listPublic
+	case rvapi.ListViewsRequest_VOTED_IN:
+		op = func(ctx context.Context, exec boil.ContextExecutor) ([]*models.Election, error) {
+			return listVotedIn(ctx, exec, userID(ctx))
 		}
+	default:
+		return nil, invalidArgument("filter")
+	}
+
+	var els []*models.Election
+	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
+		els, err = op(ctx, tx)
 		return
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	resp := rvapi.OverviewResponse{PublicElections: make([]*rvapi.ElectionView, 0, len(public))}
-	for _, el := range public {
-		resp.PublicElections = append(resp.PublicElections, protoElectionView(el))
+	resp := rvapi.ListViewsResponse{Elections: make([]*rvapi.ElectionView, 0, len(els))}
+	for _, e := range els {
+		resp.Elections = append(resp.Elections, protoElectionView(e))
 	}
-
 	return &resp, nil
+}
+
+func (h *handler) List(ctx context.Context, _ *rvapi.ListRequest) (*rvapi.ListResponse, error) {
+	var els []*models.Election
+	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
+		els, err = loadUserElections(ctx, tx, userID(ctx))
+		return
+	})
+	if err != nil {
+		return nil, err
+	}
+	resp := rvapi.ListResponse{Elections: make([]*rvapi.Election, 0, len(els))}
+	for _, e := range els {
+		resp.Elections = append(resp.Elections, protoElection(e))
+	}
+	return &resp, nil
+
 }
 
 func validateChoices(
@@ -64,7 +89,34 @@ func validateChoices(
 	return
 }
 
-func loadElectionOverview(
+func listVotedIn(ctx context.Context, exec boil.ContextExecutor, userID int64) (els []*models.Election, err error) {
+	err = queries.Raw(
+		`
+SELECT 
+	e.*
+FROM
+	rv.election e
+JOIN
+	rv.vote v
+ON
+	(v.election_id = e.id)
+WHERE
+	v.user_id = $1
+`,
+		userID,
+	).Bind(ctx, exec, &els)
+	return
+}
+
+func loadUserElections(ctx context.Context, exec boil.ContextExecutor, userID int64) ([]*models.Election, error) {
+	return models.Elections(
+		models.ElectionWhere.UserID.EQ(userID),
+		qm.OrderBy(models.ElectionColumns.CreatedAt+" DESC"),
+		qm.Limit(10),
+	).All(ctx, exec)
+}
+
+func listPublic(
 	ctx context.Context,
 	exec boil.ContextExecutor,
 ) (ms []*models.Election, err error) {

@@ -475,6 +475,166 @@ proto.rvapi.RVerPromiseClient.prototype.overview =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.ListRequest,
+ *   !proto.rvapi.ListResponse>}
+ */
+const methodDescriptor_RVer_List = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/List',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.ListRequest,
+  proto.rvapi.ListResponse,
+  /**
+   * @param {!proto.rvapi.ListRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.ListResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.ListRequest,
+ *   !proto.rvapi.ListResponse>}
+ */
+const methodInfo_RVer_List = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.ListResponse,
+  /**
+   * @param {!proto.rvapi.ListRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.ListResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.ListRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.ListResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.ListResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.list =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/List',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_List,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.ListRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.ListResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.list =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/List',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_List);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.ListViewsRequest,
+ *   !proto.rvapi.ListViewsResponse>}
+ */
+const methodDescriptor_RVer_ListViews = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/ListViews',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.ListViewsRequest,
+  proto.rvapi.ListViewsResponse,
+  /**
+   * @param {!proto.rvapi.ListViewsRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.ListViewsResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.ListViewsRequest,
+ *   !proto.rvapi.ListViewsResponse>}
+ */
+const methodInfo_RVer_ListViews = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.ListViewsResponse,
+  /**
+   * @param {!proto.rvapi.ListViewsRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.ListViewsResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.ListViewsRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.ListViewsResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.ListViewsResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.listViews =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/ListViews',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_ListViews,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.ListViewsRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.ListViewsResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.listViews =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/ListViews',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_ListViews);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
  *   !proto.rvapi.ReportRequest,
  *   !proto.rvapi.ReportResponse>}
  */

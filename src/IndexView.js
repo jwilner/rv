@@ -1,7 +1,7 @@
 import React, { Fragment, useContext, useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import { CheckedInContext, ClientContext } from "./context";
-import { CreateRequest, OverviewRequest } from "./pb/rvapi/rvapi_pb";
+import { CreateRequest, ListViewsRequest } from "./pb/rvapi/rvapi_pb";
 import { ErrorSpan } from "./ErrorSpan";
 import { isClosed } from "./dates";
 
@@ -142,7 +142,7 @@ function CreateElectionForm() {
 }
 
 function ElectionOverviewCard() {
-  const [electionsList, setElectionsList] = useState([]),
+  const [publicList, setPublicList] = useState([]),
     client = useContext(ClientContext),
     checkedIn = useContext(CheckedInContext);
 
@@ -150,19 +150,23 @@ function ElectionOverviewCard() {
   useEffect(() => {
     if (checkedIn) {
       client
-        .overview(new OverviewRequest())
-        .then((resp) => setElectionsList(resp.getPublicElectionsList()))
+        .listViews(
+          new ListViewsRequest().setFilter(ListViewsRequest.Filter.PUBLIC)
+        )
+        .then((resp) => {
+          setPublicList(resp.getElectionsList());
+        })
         .catch((resp) => console.log(resp));
     }
   }, [client, checkedIn]);
 
-  if (electionsList) {
+  if (publicList) {
     const now = new Date();
     return (
       <Fragment>
         <h3>Recent votes!</h3>
         <ul>
-          {electionsList.map((e) => {
+          {publicList.map((e) => {
             if (isClosed(e, now)) {
               return (
                 <li key={e.getBallotKey()}>

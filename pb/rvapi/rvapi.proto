@@ -12,11 +12,32 @@ service RVer {
     rpc Create (CreateRequest) returns (CreateResponse);
     rpc Get (GetRequest) returns (GetResponse);
     rpc GetView (GetViewRequest) returns (GetViewResponse);
-    rpc Overview (OverviewRequest) returns (OverviewResponse);
+    rpc List (ListRequest) returns (ListResponse);
+    rpc ListViews (ListViewsRequest) returns (ListViewsResponse);
     rpc Report (ReportRequest) returns (ReportResponse);
     rpc Update (UpdateRequest) returns (UpdateResponse);
 
     rpc Vote (VoteRequest) returns (VoteResponse);
+}
+
+message ListRequest {
+}
+
+message ListResponse {
+    repeated Election elections = 1;
+}
+
+message ListViewsRequest {
+    enum Filter {
+        UNKNOWN = 0;
+        PUBLIC = 1;
+        VOTED_IN = 2;
+    }
+    Filter filter = 1;
+}
+
+message ListViewsResponse {
+    repeated ElectionView elections = 1;
 }
 
 message CheckInRequest {
@@ -64,15 +85,6 @@ message GetViewRequest {
 
 message GetViewResponse {
     ElectionView election = 1;
-}
-
-message OverviewRequest {
-}
-
-message OverviewResponse {
-    repeated ElectionView public_elections = 1;
-    repeated Election user_elections = 2;
-    repeated ElectionView user_votes = 3;
 }
 
 message CreateRequest {
