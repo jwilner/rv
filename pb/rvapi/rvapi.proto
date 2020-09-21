@@ -66,9 +66,13 @@ message RemainingVote {
 }
 
 message Round {
-    repeated string eliminated = 1;
-    repeated RemainingVote remaining = 2;
-    map<string, int32> counted = 3;
+    repeated Tally tallies = 4;
+    int32 overall_votes = 5;
+}
+
+message Tally {
+    string choice = 1;
+    int32 count = 2;
 }
 
 message GetRequest {

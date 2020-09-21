@@ -16,9 +16,18 @@ func Test_calculateReport(t *testing.T) {
 		s  = []*rvapi.Round
 		r  = rvapi.Report
 		sa = []string
-		rv = []*rvapi.RemainingVote
-		vc = map[string]int32
 	)
+
+	round := func(overallVotes int32, vals ...interface{}) *rvapi.Round {
+		r := rvapi.Round{OverallVotes: overallVotes}
+		for i := 0; i < len(vals); i += 2 {
+			r.Tallies = append(r.Tallies, &rvapi.Tally{
+				Choice: vals[i].(string),
+				Count:  int32(vals[i+1].(int)),
+			})
+		}
+		return &r
+	}
 
 	tests := []struct {
 		name string
@@ -30,11 +39,11 @@ func Test_calculateReport(t *testing.T) {
 		{
 			name: "one vote",
 			vs:   v{{Name: "jack", Choices: sa{"bob"}}},
-			want: &r{Winner: "bob", Rounds: s{{Remaining: rv{{Name: "jack", Choices: sa{"bob"}}}, Counted: vc{"bob": 1}}}}},
+			want: &r{Winner: "bob", Rounds: s{round(1, "bob", 1)}}},
 		{
 			name: "agreeing vote",
 			vs:   v{{Name: "jack", Choices: sa{"bob"}}, {Name: "jill", Choices: sa{"bob"}}},
-			want: &r{Winner: "bob", Rounds: s{{Remaining: rv{{Name: "jack", Choices: sa{"bob"}}, {Name: "jill", Choices: sa{"bob"}}}, Counted: vc{"bob": 2}}}},
+			want: &r{Winner: "bob", Rounds: s{round(2, "bob", 2)}},
 		},
 		{
 			name: "disagreeing vote eliminates lexicographically least choice",
@@ -42,8 +51,8 @@ func Test_calculateReport(t *testing.T) {
 			want: &r{
 				Winner: "bob",
 				Rounds: s{
-					{Remaining: rv{{Name: "jack", Choices: sa{"bob"}}, {Name: "jill", Choices: sa{"bill"}}}, Counted: vc{"bob": 1, "bill": 1}},
-					{Eliminated: []string{"jill"}, Remaining: rv{{Name: "jack", Choices: sa{"bob"}}}, Counted: vc{"bob": 1}},
+					round(2, "bob", 1, "bill", 1),
+					round(1, "bob", 1),
 				},
 			},
 		},
@@ -52,18 +61,13 @@ func Test_calculateReport(t *testing.T) {
 			vs: v{
 				{Name: "jack", Choices: sa{"bob"}},
 				{Name: "jill", Choices: sa{"bill"}},
-				{Name: "jon", Choices: sa{"Barbs", "Bill"}},
+				{Name: "jon", Choices: sa{"Barbs", "bill"}},
 			},
 			want: &r{
 				Winner: "bill",
 				Rounds: s{
-					{
-						Remaining: rv{{Name: "jack", Choices: sa{"bob"}}, {Name: "jill", Choices: sa{"bill"}}, {Name: "jon", Choices: sa{"Barbs", "Bill"}}},
-						Counted:   vc{"bob": 1, "bill": 1, "barbs": 1}},
-					{
-						Remaining: rv{{Name: "jack", Choices: sa{"bob"}}, {Name: "jill", Choices: sa{"bill"}}, {Name: "jon", Choices: sa{"Bill"}}},
-						Counted:   vc{"bob": 1, "bill": 2},
-					},
+					round(3, "bob", 1, "bill", 1, "Barbs", 1),
+					round(3, "bill", 2, "bob", 1),
 				},
 			},
 		},

@@ -13,6 +13,8 @@ import (
 	"os/signal"
 	"time"
 
+	"google.golang.org/grpc/reflection"
+
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	_ "github.com/jackc/pgx/v4/stdlib" // register driver
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -24,7 +26,7 @@ import (
 )
 
 // Run runs the application, connecting to the database at dbURL and listening for HTTP at the provided address.
-func Run(debug bool, dbURL, addr, staticDir, signingKey string, tokLength time.Duration) error {
+func Run(debug bool, dbURL, addr, grpcAddr, staticDir, signingKey string, tokLength time.Duration) error {
 	// construct an r ctx that we can cancel
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
@@ -46,19 +48,58 @@ func Run(debug bool, dbURL, addr, staticDir, signingKey string, tokLength time.D
 		}
 	}()
 
-	mux := http.Handler(buildMux(h, tokM, staticDir))
+	server := newGRPCServer(tokM, h)
+
+	var grpcL net.Listener
+	if grpcAddr != "" {
+		if grpcL, err = net.Listen("tcp", grpcAddr); err != nil {
+			return err
+		}
+		defer func() {
+			_ = grpcL.Close()
+		}()
+	}
+
+	mux := http.Handler(buildMux(server, staticDir))
 	if debug {
 		mux = logMiddleware(mux)
 	}
 	mux = tokenMiddleware(mux)
 	mux = requestIDer(ctx, mux)
 
-	return listenAndServe(ctx, addr, mux)
+	errC := make(chan error, 2)
+
+	if grpcL != nil {
+		go func() {
+			select {
+			case errC <- server.Serve(grpcL):
+			case <-ctx.Done():
+				select {
+				case errC <- ctx.Err():
+				default:
+				}
+			}
+		}()
+	}
+
+	go func() {
+		select {
+		case errC <- listenAndServe(ctx, addr, mux):
+		case <-ctx.Done():
+			select {
+			case errC <- ctx.Err():
+			default:
+			}
+		}
+	}()
+
+	return <-errC
 }
 
-func buildMux(h *handler, tokM *tokenManager, staticDir string) *http.ServeMux {
+func buildMux(server *grpc.Server, staticDir string) *http.ServeMux {
+	grpcWebServer := grpcweb.WrapServer(server, grpcweb.WithWebsockets(true))
+
 	mux := http.NewServeMux()
-	grpcWebServer := grpcweb.WrapServer(newGRPCServer(tokM, h), grpcweb.WithWebsockets(true))
 	mux.Handle("/api/", http.StripPrefix("/api/", grpcWebServer))
 
 	if staticDir != "" {
@@ -141,6 +182,7 @@ func newGRPCServer(tokM *tokenManager, h *handler) *grpc.Server {
 		),
 	)
 	rvapi.RegisterRVerServer(srvr, h)
+	reflection.Register(srvr)
 	return srvr
 }
 

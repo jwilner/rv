@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sort"
 
 	"github.com/jwilner/rv/pkg/pb/rvapi"
 
@@ -37,12 +38,12 @@ func (h *handler) Report(ctx context.Context, req *rvapi.ReportRequest) (*rvapi.
 func calculateReport(vs []*models.Vote) *rvapi.Report {
 	type vote struct {
 		name    string
-		choices normalizedSlice
+		choices []string
 	}
 
 	votes := make([]*vote, 0, len(vs))
 	for _, v := range vs {
-		votes = append(votes, &vote{v.Name, normalize(v.Choices)})
+		votes = append(votes, &vote{v.Name, v.Choices})
 	}
 
 	var r rvapi.Report
@@ -59,62 +60,37 @@ func calculateReport(vs []*models.Vote) *rvapi.Report {
 					continue
 				}
 				copied = append(copied, v)
-				counted[v.choices[0].normalized]++
+				counted[v.choices[0]]++
 			}
 			votes = copied
 		}
-		var (
-			min, max       *int32
-			minVal, maxVal = make([]string, 0), make([]string, 0)
-		)
-		for v, c := range counted {
-			if min == nil || c < *min {
-				c := c
-				min = &c
-				minVal = append(minVal[:0], v) // reset
-			} else if c == *min {
-				minVal = append(minVal, v)
-			}
-			if max == nil || c > *max {
-				c := c
-				max = &c
-				maxVal = append(maxVal[:0], v) // reset
-			} else if c == *max {
-				maxVal = append(maxVal, v)
-			}
-		}
 
-		if max == nil {
+		tallies := make(sortableTallies, 0, len(counted))
+		for k, v := range counted {
+			tallies = append(tallies, &rvapi.Tally{Count: v, Choice: k})
+		}
+		sort.Sort(sort.Reverse(tallies))
+
+		if len(tallies) == 0 {
 			break
 		}
 
-		s := rvapi.Round{
-			Eliminated: eliminated,
-			Remaining:  make([]*rvapi.RemainingVote, 0, len(vs)),
-			Counted:    counted,
-		}
-		for _, v := range votes {
-			s.Remaining = append(s.Remaining, &rvapi.RemainingVote{Name: v.name, Choices: v.choices.raw()})
-		}
-		r.Rounds = append(r.Rounds, &s)
+		r.Rounds = append(r.Rounds, &rvapi.Round{
+			OverallVotes: int32(len(votes)),
+			Tallies:      tallies,
+		})
 
-		if *max > int32(len(votes)/2) {
-			r.Winner = maxVal[0]
+		if tallies[0].Count > int32(len(votes)/2) {
+			r.Winner = tallies[0].Choice
 			break
 		}
 
-		// choose min
-		least := minVal[0]
-		for _, v := range minVal {
-			if v < least {
-				least = v
-			}
-		}
+		least := tallies[len(tallies)-1].Choice
 
 		// remove least popular
 		for _, v := range votes {
 			for i := range v.choices {
-				if v.choices[i].normalized == least {
+				if v.choices[i] == least {
 					v.choices = append(v.choices[:i], v.choices[i+1:]...)
 					break
 				}
@@ -123,4 +99,18 @@ func calculateReport(vs []*models.Vote) *rvapi.Report {
 	}
 
 	return &r
+}
+
+type sortableTallies []*rvapi.Tally
+
+func (c sortableTallies) Len() int {
+	return len(c)
+}
+
+func (c sortableTallies) Less(i, j int) bool {
+	return c[i].Count < c[j].Count || (c[i].Count == c[j].Count && c[i].Choice < c[j].Choice)
+}
+
+func (c sortableTallies) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
 }

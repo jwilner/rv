@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import React, { Fragment, useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { ClientContext, WindowBaseURLContext } from "./context";
 import { Election, GetViewRequest, ReportRequest } from "./pb/rvapi/rvapi_pb";
 import { isClosed } from "./dates";
@@ -50,6 +50,7 @@ export function ReportView() {
           </div>
         );
       }
+
       return <ReportCard report={report} election={election} now={now} />;
     }
 
@@ -65,9 +66,12 @@ export function ReportView() {
                 to={`/v/${election.getBallotKey()}`}
               >{`${windowBaseURL}/v/${election.getBallotKey()}`}</Link>
             </p>
-          ) : (
-            <Fragment />
-          )}
+          ) : null}
+          <ul>
+            {election.getChoicesList().map((ch) => (
+              <li key={ch}>{ch}</li>
+            ))}
+          </ul>
         </div>
         <ObscuredReportCard />
       </div>

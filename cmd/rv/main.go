@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jwilner/rv/internal/platform"
@@ -23,6 +24,10 @@ func main() {
 
 	dbURL := os.Getenv("DATABASE_URL")
 	port := os.Getenv("PORT")
+	grpcPort := os.Getenv("GRPC_PORT")
+	if grpcPort != "" && !strings.Contains(grpcPort, ":") {
+		grpcPort = ":" + grpcPort
+	}
 	staticDir := os.Getenv("STATIC_DIR") // where to serve static assets from, if at all
 
 	signingKey := os.Getenv("TOKEN_SIGNING_KEY")
@@ -39,7 +44,7 @@ func main() {
 		log.Fatalf("Invalid TOKEN_DURATION %q: %v", tokDurS, err)
 	}
 
-	if err := platform.Run(debug, dbURL, ":"+port, staticDir, signingKey, length); err != nil {
+	if err := platform.Run(debug, dbURL, ":"+port, grpcPort, staticDir, signingKey, length); err != nil {
 		log.Fatal(err)
 	}
 }

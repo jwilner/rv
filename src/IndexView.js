@@ -268,6 +268,7 @@ function UserElectionsCard() {
               <Link to={`/e/${e.getKey()}`}>
                 {e.getQuestion()}{" "}
                 {isClosed(e, now) ? (
+                  // TODO make less boxy
                   <span className="label">Closed</span>
                 ) : (
                   <span className="label success">Active</span>
