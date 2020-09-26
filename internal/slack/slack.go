@@ -1,14 +1,21 @@
 package slack
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/slack-go/slack"
 	"google.golang.org/grpc"
@@ -17,8 +24,103 @@ import (
 	"github.com/jwilner/rv/pkg/pb/rvapi"
 )
 
-// New returns a new Handler for the provided token and client connection
-func New(token string, conn *grpc.ClientConn) *Handler {
+// New returns a mux that serve slack interactive commands at `/interactive` and slash commands at `/slashcommand`.
+// The mux performs slack signing verification per https://api.slack.com/authentication/verifying-requests-from-slack
+func New(token, signingSecret string, conn *grpc.ClientConn) http.Handler {
+	h := newHandler(token, conn)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/interactive", h.ServeInteractive)
+	mux.HandleFunc("/slashcommand", h.ServeSlashCommand)
+
+	return slackVerifyMiddleware([]byte(signingSecret), mux)
+}
+
+// slackVerifyMiddleware verifies that every inbound request on this handler matches the slack validation logic
+// - X-Slack-Request-Timestamp must be no more than five minutes old
+// - X-Slack-Signature matches the hmac/sha256 of the message
+func slackVerifyMiddleware(signingSecret []byte, next http.Handler) http.Handler {
+	swallowPanic := func(f func() error) (err error) {
+		defer func() {
+			p := recover()
+			if p == nil {
+				return
+			}
+			if pErr, ok := p.(error); ok {
+				err = pErr
+			}
+			err = fmt.Errorf("panicked: %v", err)
+		}()
+		err = f()
+		return
+	}
+
+	// slack suggests enforcing that ts is neither five minutes before or after now
+	tsValid := func(reqTs string) bool {
+		tsInt, err := strconv.ParseInt(reqTs, 10, 64)
+		if err != nil {
+			return false
+		}
+		elapsed := time.Since(time.Unix(tsInt, 0))
+		return elapsed < 5*time.Minute && elapsed > -5*time.Minute
+	}
+
+	hmacPool := sync.Pool{New: func() interface{} { return hmac.New(sha256.New, signingSecret) }}
+	hmacValid := func(body []byte, requestTS, slackSig string) bool {
+		h := hmacPool.Get().(hash.Hash)
+		defer func() {
+			h.Reset()
+			hmacPool.Put(h)
+		}()
+
+		// hash writes guaranteed to not error
+		_, _ = h.Write([]byte("v0:" + requestTS + ":"))
+		_, _ = h.Write(body)
+
+		expectedMac := h.Sum(nil)
+
+		return !hmac.Equal([]byte(slackSig), expectedMac)
+	}
+
+	bufPool := sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("hi")
+
+		buf := bufPool.Get().(*bytes.Buffer)
+		defer func() {
+			buf.Reset()
+			bufPool.Put(buf)
+		}()
+
+		if err := swallowPanic(func() error {
+			_, err := buf.ReadFrom(r.Body)
+			return err
+		}); handleErr(w, "buf.ReadFrom", err) {
+			return
+		}
+
+		reqTs := r.Header.Get("X-Slack-Request-Timestamp")
+
+		if !tsValid(reqTs) {
+			log.Printf("Rejecting an invalid X-Slack-Request-Timestamp: %q", reqTs)
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		if sig := r.Header.Get("X-Slack-Signature"); !hmacValid(buf.Bytes(), reqTs, sig) {
+			log.Printf("Rejecting an invalid X-Slack-Signature: %q", sig)
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		// provide buffered body for later reads
+		r.Body = ioutil.NopCloser(buf)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func newHandler(token string, conn *grpc.ClientConn) *Handler {
 	return &Handler{slack: slack.New(token), rver: rvapi.NewRVerClient(conn)}
 }
 

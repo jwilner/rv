@@ -30,7 +30,7 @@ import (
 // Run runs the application, connecting to the database at dbURL and listening for HTTP at the provided address.
 func Run(
 	debug bool,
-	dbURL, addr, grpcAddr, staticDir, signingKey, slackToken string,
+	dbURL, addr, grpcAddr, staticDir, signingKey, slackToken, slackSigningSecret string,
 	tokLength time.Duration,
 ) error {
 	// construct an r ctx that we can cancel
@@ -72,7 +72,7 @@ func Run(
 	}
 
 	var (
-		slackMux  *slack.Handler
+		slackMux  http.Handler
 		grpcUnixL net.Listener
 	)
 	if slackToken != "" {
@@ -80,6 +80,9 @@ func Run(
 		if err != nil {
 			return err
 		}
+		defer func() {
+			_ = os.RemoveAll(dir)
+		}()
 
 		sockPath := path.Join(dir, "rv.sock")
 
@@ -88,7 +91,6 @@ func Run(
 		}
 		defer func() {
 			_ = grpcUnixL.Close()
-			_ = os.Remove("/tmp/rv.sock")
 		}()
 
 		conn, err := grpc.Dial("passthrough:///unix://"+sockPath, grpc.WithInsecure())
@@ -99,7 +101,7 @@ func Run(
 			_ = conn.Close()
 		}()
 
-		slackMux = slack.New(slackToken, conn)
+		slackMux = slack.New(slackToken, slackSigningSecret, conn)
 	}
 
 	mux := http.Handler(buildMux(server, staticMux, slackMux))
@@ -151,18 +153,13 @@ func Run(
 	return <-errC
 }
 
-func buildMux(
-	server *grpc.Server,
-	staticMux http.Handler,
-	slackHandler *slack.Handler,
-) *http.ServeMux {
+func buildMux(server *grpc.Server, staticMux, slackMux http.Handler) *http.ServeMux {
 	grpcWebServer := grpcweb.WrapServer(server, grpcweb.WithWebsockets(true))
 
 	mux := http.NewServeMux()
 
-	if slackHandler != nil {
-		mux.HandleFunc("/api/slack/interactive", slackHandler.ServeInteractive)
-		mux.HandleFunc("/api/slack/slashcommand", slackHandler.ServeSlashCommand)
+	if slackMux != nil {
+		mux.Handle("/api/slack/", http.StripPrefix("/api/slack", slackMux))
 	}
 
 	mux.Handle("/api/", http.StripPrefix("/api/", grpcWebServer))

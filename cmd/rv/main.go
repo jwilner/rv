@@ -46,6 +46,10 @@ func main() {
 
 	// if set, we'll serve the slack endpoints
 	slackToken := os.Getenv("SLACK_TOKEN")
+	slackSigningSecret := os.Getenv("SLACK_SIGNING_SECRET")
+	if slackToken != "" && slackSigningSecret == "" {
+		log.Fatal("SLACK_SIGNING_SECRET must be set if SLACK_TOKEN is")
+	}
 
 	if err := platform.Run(
 		debug,
@@ -55,6 +59,7 @@ func main() {
 		staticDir,
 		signingKey,
 		slackToken,
+		slackSigningSecret,
 		length,
 	); err != nil {
 		log.Fatal(err)
