@@ -263,12 +263,13 @@ func viewToVoteRequest(ballotKey string, ic *slack.InteractionCallback) *rvapi.V
 
 func (s *Handler) handleAddOption(ctx context.Context, ic *slack.InteractionCallback) error {
 	m := slack.ModalViewRequest{
-		Type:       slack.VTModal,
-		Title:      ic.View.Title,
-		Close:      ic.View.Close,
-		Submit:     ic.View.Submit,
-		Blocks:     ic.View.Blocks,
-		CallbackID: ic.CallbackID,
+		Type:            slack.VTModal,
+		PrivateMetadata: ic.View.PrivateMetadata,
+		Title:           ic.View.Title,
+		Close:           ic.View.Close,
+		Submit:          ic.View.Submit,
+		Blocks:          ic.View.Blocks,
+		CallbackID:      ic.CallbackID,
 	}
 
 	m.Blocks.BlockSet = append(
