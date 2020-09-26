@@ -3,19 +3,15 @@ package slack
 import (
 	"bytes"
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hash"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/slack-go/slack"
 	"google.golang.org/grpc"
@@ -33,13 +29,13 @@ func New(token, signingSecret string, conn *grpc.ClientConn) http.Handler {
 	mux.HandleFunc("/interactive", h.ServeInteractive)
 	mux.HandleFunc("/slashcommand", h.ServeSlashCommand)
 
-	return slackVerifyMiddleware([]byte(signingSecret), mux)
+	return slackVerifyMiddleware(signingSecret, mux)
 }
 
 // slackVerifyMiddleware verifies that every inbound request on this handler matches the slack validation logic
 // - X-Slack-Request-Timestamp must be no more than five minutes old
 // - X-Slack-Signature matches the hmac/sha256 of the message
-func slackVerifyMiddleware(signingSecret []byte, next http.Handler) http.Handler {
+func slackVerifyMiddleware(signingSecret string, next http.Handler) http.Handler {
 	swallowPanic := func(f func() error) (err error) {
 		defer func() {
 			p := recover()
@@ -53,33 +49,6 @@ func slackVerifyMiddleware(signingSecret []byte, next http.Handler) http.Handler
 		}()
 		err = f()
 		return
-	}
-
-	// slack suggests enforcing that ts is neither five minutes before or after now
-	tsValid := func(reqTs string) bool {
-		tsInt, err := strconv.ParseInt(reqTs, 10, 64)
-		if err != nil {
-			return false
-		}
-		elapsed := time.Since(time.Unix(tsInt, 0))
-		return elapsed < 5*time.Minute && elapsed > -5*time.Minute
-	}
-
-	hmacPool := sync.Pool{New: func() interface{} { return hmac.New(sha256.New, signingSecret) }}
-	hmacValid := func(body []byte, requestTS, slackSig string) bool {
-		h := hmacPool.Get().(hash.Hash)
-		defer func() {
-			h.Reset()
-			hmacPool.Put(h)
-		}()
-
-		// hash writes guaranteed to not error
-		_, _ = h.Write([]byte("v0:" + requestTS + ":"))
-		_, _ = h.Write(body)
-
-		expectedMac := h.Sum(nil)
-
-		return !hmac.Equal([]byte(slackSig), expectedMac)
 	}
 
 	bufPool := sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
@@ -97,16 +66,15 @@ func slackVerifyMiddleware(signingSecret []byte, next http.Handler) http.Handler
 			return
 		}
 
-		reqTs := r.Header.Get("X-Slack-Request-Timestamp")
-
-		if !tsValid(reqTs) {
-			log.Printf("Rejecting an invalid X-Slack-Request-Timestamp: %q", reqTs)
+		verifier, err := slack.NewSecretsVerifier(r.Header, signingSecret)
+		if err != nil {
+			log.Printf("Rejecting invalid slack request headers: %v", err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-
-		if sig := r.Header.Get("X-Slack-Signature"); !hmacValid(buf.Bytes(), reqTs, sig) {
-			log.Printf("Rejecting an invalid X-Slack-Signature: %q", sig)
+		_, _ = verifier.Write(buf.Bytes()) // can't fail and even if it did, ensure would be invalid
+		if err := verifier.Ensure(); err != nil {
+			log.Printf("Rejecting slack request which does not match scret: %v", err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
@@ -118,16 +86,16 @@ func slackVerifyMiddleware(signingSecret []byte, next http.Handler) http.Handler
 	})
 }
 
-func newHandler(token string, conn *grpc.ClientConn) *Handler {
-	return &Handler{slack: slack.New(token), rver: rvapi.NewRVerClient(conn)}
+func newHandler(token string, conn *grpc.ClientConn) *handler {
+	return &handler{slack: slack.New(token), rver: rvapi.NewRVerClient(conn)}
 }
 
-type Handler struct {
+type handler struct {
 	slack *slack.Client
 	rver  rvapi.RVerClient
 }
 
-func (s *Handler) ServeInteractive(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ServeInteractive(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		wrongMethod(w)
 		return
@@ -144,10 +112,10 @@ func (s *Handler) ServeInteractive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go s.handleAsync(&ic)
+	go h.handleAsync(&ic)
 }
 
-func (s *Handler) handleAsync(ic *slack.InteractionCallback) {
+func (h *handler) handleAsync(ic *slack.InteractionCallback) {
 	ctx := context.Background()
 
 	var err error
@@ -155,9 +123,9 @@ func (s *Handler) handleAsync(ic *slack.InteractionCallback) {
 	case slack.InteractionTypeViewSubmission:
 		switch ic.View.Title.Text {
 		case "Ranked Choice Vote":
-			err = s.handleCreateView(ctx, ic)
+			err = h.handleCreateView(ctx, ic)
 		case "Rank Your Choices":
-			err = s.handleVote(ctx, ic)
+			err = h.handleVote(ctx, ic)
 		default:
 			err = fmt.Errorf("unknown view: %q", ic.View.Title.Text)
 		}
@@ -168,9 +136,9 @@ func (s *Handler) handleAsync(ic *slack.InteractionCallback) {
 		}
 		switch ic.ActionCallback.BlockActions[0].ActionID {
 		case "launch-vote":
-			err = s.handleLaunchVote(ctx, ic)
+			err = h.handleLaunchVote(ctx, ic)
 		case "add_option":
-			err = s.handleAddOption(ctx, ic)
+			err = h.handleAddOption(ctx, ic)
 		default:
 			err = fmt.Errorf("unknown block action: %q", ic.ActionCallback.BlockActions[0].ActionID)
 		}
@@ -182,34 +150,34 @@ func (s *Handler) handleAsync(ic *slack.InteractionCallback) {
 	}
 }
 
-func (s *Handler) checkIn(ctx context.Context) (context.Context, error) {
+func (h *handler) checkIn(ctx context.Context) (context.Context, error) {
 	var md metadata.MD
-	_, err := s.rver.CheckIn(ctx, &rvapi.CheckInRequest{}, grpc.Header(&md))
+	_, err := h.rver.CheckIn(ctx, &rvapi.CheckInRequest{}, grpc.Header(&md))
 	if err != nil {
 		return nil, err
 	}
 	return metadata.AppendToOutgoingContext(ctx, "rv-token", md["rv-token"][0]), nil
 }
 
-func (s *Handler) handleCreateView(ctx context.Context, ic *slack.InteractionCallback) error {
+func (h *handler) handleCreateView(ctx context.Context, ic *slack.InteractionCallback) error {
 	req := viewToCreateRequest(ic)
 	if req == nil {
 		return errors.New("invalid view")
 	}
 
 	var err error
-	if ctx, err = s.checkIn(ctx); err != nil {
+	if ctx, err = h.checkIn(ctx); err != nil {
 		return fmt.Errorf("unable to check in: %w", err)
 	}
 
-	resp, err := s.rver.Create(ctx, req)
+	resp, err := h.rver.Create(ctx, req)
 	if err != nil {
 		return fmt.Errorf("unable to create: %w", err)
 	}
 
 	channelID := ic.View.PrivateMetadata
 
-	_, _, err = s.slack.PostMessageContext(
+	_, _, err = h.slack.PostMessageContext(
 		ctx,
 		channelID,
 		slack.MsgOptionBlocks(renderElection(resp.Election, nil)...),
@@ -220,10 +188,10 @@ func (s *Handler) handleCreateView(ctx context.Context, ic *slack.InteractionCal
 	return nil
 }
 
-func (s *Handler) handleLaunchVote(ctx context.Context, ic *slack.InteractionCallback) error {
+func (h *handler) handleLaunchVote(ctx context.Context, ic *slack.InteractionCallback) error {
 	ballotKey := ic.ActionCallback.BlockActions[0].Value
 
-	resp, err := s.rver.GetView(ctx, &rvapi.GetViewRequest{BallotKey: ballotKey})
+	resp, err := h.rver.GetView(ctx, &rvapi.GetViewRequest{BallotKey: ballotKey})
 	if err != nil {
 		return fmt.Errorf("rver.GetView: %w", err)
 	}
@@ -285,18 +253,14 @@ func (s *Handler) handleLaunchVote(ctx context.Context, ic *slack.InteractionCal
 		)
 	}
 
-	_, err = s.slack.OpenViewContext(
-		ctx,
-		ic.TriggerID,
-		mvr,
-	)
+	_, err = h.slack.OpenViewContext(ctx, ic.TriggerID, mvr)
 	if err != nil {
 		return fmt.Errorf("slack.OpenViewContext: %w", err)
 	}
 	return nil
 }
 
-func (s *Handler) handleVote(ctx context.Context, ic *slack.InteractionCallback) error {
+func (h *handler) handleVote(ctx context.Context, ic *slack.InteractionCallback) error {
 	parts := strings.Split(ic.View.PrivateMetadata, "|")
 	if len(parts) != 3 {
 		return errors.New("invalid view")
@@ -308,25 +272,25 @@ func (s *Handler) handleVote(ctx context.Context, ic *slack.InteractionCallback)
 		return errors.New("invalid view")
 	}
 	var err error
-	if ctx, err = s.checkIn(ctx); err != nil {
+	if ctx, err = h.checkIn(ctx); err != nil {
 		return fmt.Errorf("checkIn: %w", err)
 	}
-	_, err = s.rver.Vote(ctx, req)
+	_, err = h.rver.Vote(ctx, req)
 	if err != nil {
 		return fmt.Errorf("vote: %w", err)
 	}
 
-	el, err := s.rver.GetView(ctx, &rvapi.GetViewRequest{BallotKey: ballotKey})
+	el, err := h.rver.GetView(ctx, &rvapi.GetViewRequest{BallotKey: ballotKey})
 	if err != nil {
 		return fmt.Errorf("rver.GetView: %w", err)
 	}
 
-	rep, err := s.rver.Report(ctx, &rvapi.ReportRequest{BallotKey: ballotKey})
+	rep, err := h.rver.Report(ctx, &rvapi.ReportRequest{BallotKey: ballotKey})
 	if err != nil {
 		return fmt.Errorf("rver.Report: %w", err)
 	}
 
-	_, _, _, err = s.slack.UpdateMessageContext(
+	_, _, _, err = h.slack.UpdateMessageContext(
 		ctx,
 		channelID,
 		msgTS,
@@ -361,7 +325,7 @@ func viewToVoteRequest(ballotKey string, ic *slack.InteractionCallback) *rvapi.V
 	return &vote
 }
 
-func (s *Handler) handleAddOption(ctx context.Context, ic *slack.InteractionCallback) error {
+func (h *handler) handleAddOption(ctx context.Context, ic *slack.InteractionCallback) error {
 	m := slack.ModalViewRequest{
 		Type:            slack.VTModal,
 		PrivateMetadata: ic.View.PrivateMetadata,
@@ -388,7 +352,7 @@ func (s *Handler) handleAddOption(ctx context.Context, ic *slack.InteractionCall
 		m.Blocks.BlockSet[len(m.Blocks.BlockSet)-1],
 	)
 
-	_, err := s.slack.UpdateViewContext(ctx, m, "", ic.Hash, ic.View.ID)
+	_, err := h.slack.UpdateViewContext(ctx, m, "", ic.Hash, ic.View.ID)
 	if err != nil {
 		return fmt.Errorf("slack.UpdateViewContext: %w", err)
 	}
@@ -426,8 +390,8 @@ func viewToCreateRequest(cb *slack.InteractionCallback) *rvapi.CreateRequest {
 	return &req
 }
 
-func (s *Handler) openView(channelID, triggerID string) {
-	_, err := s.slack.OpenView(triggerID, slack.ModalViewRequest{
+func (h *handler) openView(channelID, triggerID string) {
+	_, err := h.slack.OpenView(triggerID, slack.ModalViewRequest{
 		Type:            slack.VTModal,
 		PrivateMetadata: channelID,
 		Title: &slack.TextBlockObject{
@@ -492,7 +456,7 @@ func (s *Handler) openView(channelID, triggerID string) {
 	}
 }
 
-func (s *Handler) ServeSlashCommand(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ServeSlashCommand(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "POST" {
 		wrongMethod(w)
 		return
@@ -504,7 +468,7 @@ func (s *Handler) ServeSlashCommand(w http.ResponseWriter, r *http.Request) {
 
 	triggerID := r.FormValue("trigger_id")
 	channelID := r.FormValue("channel_id")
-	go s.openView(channelID, triggerID)
+	go h.openView(channelID, triggerID)
 }
 
 func handleErr(w http.ResponseWriter, tag string, err error) bool {
