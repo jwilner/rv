@@ -1,12 +1,10 @@
 package slack
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -109,9 +107,11 @@ func (s *Handler) handleCreateView(ctx context.Context, ic *slack.InteractionCal
 		return fmt.Errorf("unable to create: %w", err)
 	}
 
+	channelID := ic.View.PrivateMetadata
+
 	_, _, err = s.slack.PostMessageContext(
 		ctx,
-		"C01AXJVLAAJ",
+		channelID,
 		slack.MsgOptionBlocks(renderElection(resp.Election, nil)...),
 	)
 	if err != nil {
@@ -325,9 +325,10 @@ func viewToCreateRequest(cb *slack.InteractionCallback) *rvapi.CreateRequest {
 	return &req
 }
 
-func (s *Handler) openView(triggerID string) {
+func (s *Handler) openView(channelID, triggerID string) {
 	_, err := s.slack.OpenView(triggerID, slack.ModalViewRequest{
-		Type: slack.VTModal,
+		Type:            slack.VTModal,
+		PrivateMetadata: channelID,
 		Title: &slack.TextBlockObject{
 			Type:  slack.PlainTextType,
 			Text:  "Ranked Choice Vote",
@@ -401,7 +402,8 @@ func (s *Handler) ServeSlashCommand(w http.ResponseWriter, r *http.Request) {
 	}
 
 	triggerID := r.FormValue("trigger_id")
-	go s.openView(triggerID)
+	channelID := r.FormValue("channel_id")
+	go s.openView(channelID, triggerID)
 }
 
 func handleErr(w http.ResponseWriter, tag string, err error) bool {
@@ -415,31 +417,6 @@ func handleErr(w http.ResponseWriter, tag string, err error) bool {
 
 func wrongMethod(w http.ResponseWriter) {
 	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-}
-
-type responseWriter struct {
-	http.ResponseWriter
-	code int
-}
-
-func (r *responseWriter) WriteHeader(code int) {
-	r.code = code
-	r.ResponseWriter.WriteHeader(code)
-}
-
-type loggingHTTPClient struct {
-}
-
-func (c *loggingHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	buf, err := ioutil.ReadAll(resp.Body)
-	_ = resp.Body.Close()
-
-	resp.Body = ioutil.NopCloser(bytes.NewReader(buf))
-	return resp, nil
 }
 
 type election interface {

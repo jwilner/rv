@@ -15,13 +15,12 @@ import (
 	"path"
 	"time"
 
-	"google.golang.org/grpc/reflection"
-
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	_ "github.com/jackc/pgx/v4/stdlib" // register driver
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
 	"github.com/jwilner/rv/internal/slack"
