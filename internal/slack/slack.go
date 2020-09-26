@@ -84,8 +84,6 @@ func slackVerifyMiddleware(signingSecret []byte, next http.Handler) http.Handler
 
 	bufPool := sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("hi")
-
 		buf := bufPool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
