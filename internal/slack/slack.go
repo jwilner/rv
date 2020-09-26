@@ -241,7 +241,7 @@ func (s *Handler) handleVote(ctx context.Context, ic *slack.InteractionCallback)
 func viewToVoteRequest(ballotKey string, ic *slack.InteractionCallback) *rvapi.VoteRequest {
 	vote := rvapi.VoteRequest{
 		BallotKey: ballotKey,
-		Name:      ic.View.ID,
+		Name:      ic.User.Name,
 	}
 	for _, r := range ic.View.Blocks.BlockSet {
 		i, ok := r.(*slack.InputBlock)
