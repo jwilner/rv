@@ -2,10 +2,12 @@ package platform
 
 import (
 	"math/rand"
+	"time"
 )
 
 // TODO don't use built-in rand's shitty concurrency
 func newStringGener() *stringGener {
+	rand.Seed(time.Now().UnixNano())
 	return new(stringGener)
 }
 

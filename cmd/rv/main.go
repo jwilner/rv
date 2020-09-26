@@ -44,7 +44,19 @@ func main() {
 		log.Fatalf("Invalid TOKEN_DURATION %q: %v", tokDurS, err)
 	}
 
-	if err := platform.Run(debug, dbURL, ":"+port, grpcPort, staticDir, signingKey, length); err != nil {
+	// if set, we'll serve the slack endpoints
+	slackToken := os.Getenv("SLACK_TOKEN")
+
+	if err := platform.Run(
+		debug,
+		dbURL,
+		":"+port,
+		grpcPort,
+		staticDir,
+		signingKey,
+		slackToken,
+		length,
+	); err != nil {
 		log.Fatal(err)
 	}
 }

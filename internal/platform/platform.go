@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"time"
 
 	"google.golang.org/grpc/reflection"
@@ -22,11 +24,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/jwilner/rv/internal/slack"
 	"github.com/jwilner/rv/pkg/pb/rvapi"
 )
 
 // Run runs the application, connecting to the database at dbURL and listening for HTTP at the provided address.
-func Run(debug bool, dbURL, addr, grpcAddr, staticDir, signingKey string, tokLength time.Duration) error {
+func Run(
+	debug bool,
+	dbURL, addr, grpcAddr, staticDir, signingKey, slackToken string,
+	tokLength time.Duration,
+) error {
 	// construct an r ctx that we can cancel
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
@@ -60,19 +67,68 @@ func Run(debug bool, dbURL, addr, grpcAddr, staticDir, signingKey string, tokLen
 		}()
 	}
 
-	mux := http.Handler(buildMux(server, staticDir))
+	var staticMux http.Handler
+	if staticDir != "" {
+		staticMux = http.FileServer(http.Dir(staticDir))
+	}
+
+	var (
+		slackMux  *slack.Handler
+		grpcUnixL net.Listener
+	)
+	if slackToken != "" {
+		dir, err := ioutil.TempDir("", "rv*")
+		if err != nil {
+			return err
+		}
+
+		sockPath := path.Join(dir, "rv.sock")
+
+		if grpcUnixL, err = net.Listen("unix", sockPath); err != nil {
+			return err
+		}
+		defer func() {
+			_ = grpcUnixL.Close()
+			_ = os.Remove("/tmp/rv.sock")
+		}()
+
+		conn, err := grpc.Dial("passthrough:///unix://"+sockPath, grpc.WithInsecure())
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = conn.Close()
+		}()
+
+		slackMux = slack.New(slackToken, conn)
+	}
+
+	mux := http.Handler(buildMux(server, staticMux, slackMux))
 	if debug {
 		mux = logMiddleware(mux)
 	}
 	mux = tokenMiddleware(mux)
 	mux = requestIDer(ctx, mux)
 
-	errC := make(chan error, 2)
+	errC := make(chan error, 3)
 
 	if grpcL != nil {
 		go func() {
 			select {
 			case errC <- server.Serve(grpcL):
+			case <-ctx.Done():
+				select {
+				case errC <- ctx.Err():
+				default:
+				}
+			}
+		}()
+	}
+
+	if grpcUnixL != nil {
+		go func() {
+			select {
+			case errC <- server.Serve(grpcUnixL):
 			case <-ctx.Done():
 				select {
 				case errC <- ctx.Err():
@@ -96,16 +152,24 @@ func Run(debug bool, dbURL, addr, grpcAddr, staticDir, signingKey string, tokLen
 	return <-errC
 }
 
-func buildMux(server *grpc.Server, staticDir string) *http.ServeMux {
+func buildMux(
+	server *grpc.Server,
+	staticMux http.Handler,
+	slackHandler *slack.Handler,
+) *http.ServeMux {
 	grpcWebServer := grpcweb.WrapServer(server, grpcweb.WithWebsockets(true))
 
 	mux := http.NewServeMux()
+
+	if slackHandler != nil {
+		mux.HandleFunc("/api/slack/interactive", slackHandler.ServeInteractive)
+		mux.HandleFunc("/api/slack/slashcommand", slackHandler.ServeSlashCommand)
+	}
+
 	mux.Handle("/api/", http.StripPrefix("/api/", grpcWebServer))
 
-	if staticDir != "" {
-		fs := http.FileServer(http.Dir(staticDir))
-
-		mux.Handle("/static/", fs)
+	if staticMux != nil {
+		mux.Handle("/static/", staticMux)
 
 		// any requests that come in at the following paths should be rewritten to be served
 		// the index and the frontend router.
@@ -113,7 +177,7 @@ func buildMux(server *grpc.Server, staticDir string) *http.ServeMux {
 			original := r.URL.Path
 
 			r.URL.Path = "/"
-			fs.ServeHTTP(w, r)
+			staticMux.ServeHTTP(w, r)
 
 			r.URL.Path = original
 		}))
