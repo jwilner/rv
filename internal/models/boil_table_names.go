@@ -4,10 +4,14 @@
 package models
 
 var TableNames = struct {
+	Alias    string
+	Client   string
 	Election string
 	User     string
 	Vote     string
 }{
+	Alias:    "alias",
+	Client:   "client",
 	Election: "election",
 	User:     "user",
 	Vote:     "vote",

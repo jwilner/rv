@@ -155,6 +155,86 @@ proto.rvapi.RVerPromiseClient.prototype.checkIn =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
+ *   !proto.rvapi.TrustedCheckInRequest,
+ *   !proto.rvapi.TrustedCheckInResponse>}
+ */
+const methodDescriptor_RVer_TrustedCheckIn = new grpc.web.MethodDescriptor(
+  '/rvapi.RVer/TrustedCheckIn',
+  grpc.web.MethodType.UNARY,
+  proto.rvapi.TrustedCheckInRequest,
+  proto.rvapi.TrustedCheckInResponse,
+  /**
+   * @param {!proto.rvapi.TrustedCheckInRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.TrustedCheckInResponse.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.rvapi.TrustedCheckInRequest,
+ *   !proto.rvapi.TrustedCheckInResponse>}
+ */
+const methodInfo_RVer_TrustedCheckIn = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.rvapi.TrustedCheckInResponse,
+  /**
+   * @param {!proto.rvapi.TrustedCheckInRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.rvapi.TrustedCheckInResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.rvapi.TrustedCheckInRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.rvapi.TrustedCheckInResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.rvapi.TrustedCheckInResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.rvapi.RVerClient.prototype.trustedCheckIn =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/rvapi.RVer/TrustedCheckIn',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_TrustedCheckIn,
+      callback);
+};
+
+
+/**
+ * @param {!proto.rvapi.TrustedCheckInRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.rvapi.TrustedCheckInResponse>}
+ *     Promise that resolves to the response
+ */
+proto.rvapi.RVerPromiseClient.prototype.trustedCheckIn =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/rvapi.RVer/TrustedCheckIn',
+      request,
+      metadata || {},
+      methodDescriptor_RVer_TrustedCheckIn);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
  *   !proto.rvapi.CreateRequest,
  *   !proto.rvapi.CreateResponse>}
  */

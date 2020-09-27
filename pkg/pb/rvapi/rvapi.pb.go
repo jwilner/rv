@@ -121,7 +121,7 @@ func (x Election_Flag) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Election_Flag.Descriptor instead.
 func (Election_Flag) EnumDescriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{18, 0}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{20, 0}
 }
 
 type ListRequest struct {
@@ -379,6 +379,115 @@ func (*CheckInResponse) Descriptor() ([]byte, []int) {
 	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{5}
 }
 
+type TrustedCheckInRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ClientId  string               `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	UserName  string               `protobuf:"bytes,2,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
+	Timestamp *timestamp.Timestamp `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Digest    []byte               `protobuf:"bytes,4,opt,name=digest,proto3" json:"digest,omitempty"`
+}
+
+func (x *TrustedCheckInRequest) Reset() {
+	*x = TrustedCheckInRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TrustedCheckInRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrustedCheckInRequest) ProtoMessage() {}
+
+func (x *TrustedCheckInRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrustedCheckInRequest.ProtoReflect.Descriptor instead.
+func (*TrustedCheckInRequest) Descriptor() ([]byte, []int) {
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *TrustedCheckInRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *TrustedCheckInRequest) GetUserName() string {
+	if x != nil {
+		return x.UserName
+	}
+	return ""
+}
+
+func (x *TrustedCheckInRequest) GetTimestamp() *timestamp.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
+func (x *TrustedCheckInRequest) GetDigest() []byte {
+	if x != nil {
+		return x.Digest
+	}
+	return nil
+}
+
+type TrustedCheckInResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *TrustedCheckInResponse) Reset() {
+	*x = TrustedCheckInResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TrustedCheckInResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrustedCheckInResponse) ProtoMessage() {}
+
+func (x *TrustedCheckInResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrustedCheckInResponse.ProtoReflect.Descriptor instead.
+func (*TrustedCheckInResponse) Descriptor() ([]byte, []int) {
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{7}
+}
+
 type ReportRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -391,7 +500,7 @@ type ReportRequest struct {
 func (x *ReportRequest) Reset() {
 	*x = ReportRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[6]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -404,7 +513,7 @@ func (x *ReportRequest) String() string {
 func (*ReportRequest) ProtoMessage() {}
 
 func (x *ReportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[6]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -417,7 +526,7 @@ func (x *ReportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportRequest.ProtoReflect.Descriptor instead.
 func (*ReportRequest) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{6}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ReportRequest) GetKey() string {
@@ -445,7 +554,7 @@ type ReportResponse struct {
 func (x *ReportResponse) Reset() {
 	*x = ReportResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[7]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -458,7 +567,7 @@ func (x *ReportResponse) String() string {
 func (*ReportResponse) ProtoMessage() {}
 
 func (x *ReportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[7]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -471,7 +580,7 @@ func (x *ReportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportResponse.ProtoReflect.Descriptor instead.
 func (*ReportResponse) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{7}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ReportResponse) GetReport() *Report {
@@ -493,7 +602,7 @@ type Report struct {
 func (x *Report) Reset() {
 	*x = Report{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[8]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -506,7 +615,7 @@ func (x *Report) String() string {
 func (*Report) ProtoMessage() {}
 
 func (x *Report) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[8]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -519,7 +628,7 @@ func (x *Report) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Report.ProtoReflect.Descriptor instead.
 func (*Report) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{8}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Report) GetWinner() string {
@@ -548,7 +657,7 @@ type RemainingVote struct {
 func (x *RemainingVote) Reset() {
 	*x = RemainingVote{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[9]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -561,7 +670,7 @@ func (x *RemainingVote) String() string {
 func (*RemainingVote) ProtoMessage() {}
 
 func (x *RemainingVote) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[9]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +683,7 @@ func (x *RemainingVote) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemainingVote.ProtoReflect.Descriptor instead.
 func (*RemainingVote) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{9}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RemainingVote) GetName() string {
@@ -603,7 +712,7 @@ type Round struct {
 func (x *Round) Reset() {
 	*x = Round{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[10]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -616,7 +725,7 @@ func (x *Round) String() string {
 func (*Round) ProtoMessage() {}
 
 func (x *Round) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[10]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -629,7 +738,7 @@ func (x *Round) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Round.ProtoReflect.Descriptor instead.
 func (*Round) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{10}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Round) GetTallies() []*Tally {
@@ -658,7 +767,7 @@ type Tally struct {
 func (x *Tally) Reset() {
 	*x = Tally{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[11]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -671,7 +780,7 @@ func (x *Tally) String() string {
 func (*Tally) ProtoMessage() {}
 
 func (x *Tally) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[11]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -684,7 +793,7 @@ func (x *Tally) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tally.ProtoReflect.Descriptor instead.
 func (*Tally) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{11}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Tally) GetChoice() string {
@@ -712,7 +821,7 @@ type GetRequest struct {
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[12]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -725,7 +834,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[12]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -738,7 +847,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{12}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetRequest) GetKey() string {
@@ -759,7 +868,7 @@ type GetResponse struct {
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[13]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -772,7 +881,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[13]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -785,7 +894,7 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{13}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetResponse) GetElection() *Election {
@@ -806,7 +915,7 @@ type GetViewRequest struct {
 func (x *GetViewRequest) Reset() {
 	*x = GetViewRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[14]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -819,7 +928,7 @@ func (x *GetViewRequest) String() string {
 func (*GetViewRequest) ProtoMessage() {}
 
 func (x *GetViewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[14]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -832,7 +941,7 @@ func (x *GetViewRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetViewRequest.ProtoReflect.Descriptor instead.
 func (*GetViewRequest) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{14}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetViewRequest) GetBallotKey() string {
@@ -853,7 +962,7 @@ type GetViewResponse struct {
 func (x *GetViewResponse) Reset() {
 	*x = GetViewResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[15]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -866,7 +975,7 @@ func (x *GetViewResponse) String() string {
 func (*GetViewResponse) ProtoMessage() {}
 
 func (x *GetViewResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[15]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -879,7 +988,7 @@ func (x *GetViewResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetViewResponse.ProtoReflect.Descriptor instead.
 func (*GetViewResponse) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{15}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetViewResponse) GetElection() *ElectionView {
@@ -901,7 +1010,7 @@ type CreateRequest struct {
 func (x *CreateRequest) Reset() {
 	*x = CreateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[16]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -914,7 +1023,7 @@ func (x *CreateRequest) String() string {
 func (*CreateRequest) ProtoMessage() {}
 
 func (x *CreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[16]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -927,7 +1036,7 @@ func (x *CreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRequest.ProtoReflect.Descriptor instead.
 func (*CreateRequest) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{16}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *CreateRequest) GetQuestion() string {
@@ -955,7 +1064,7 @@ type CreateResponse struct {
 func (x *CreateResponse) Reset() {
 	*x = CreateResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[17]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -968,7 +1077,7 @@ func (x *CreateResponse) String() string {
 func (*CreateResponse) ProtoMessage() {}
 
 func (x *CreateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[17]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -981,7 +1090,7 @@ func (x *CreateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateResponse.ProtoReflect.Descriptor instead.
 func (*CreateResponse) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{17}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CreateResponse) GetElection() *Election {
@@ -1007,7 +1116,7 @@ type Election struct {
 func (x *Election) Reset() {
 	*x = Election{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[18]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1020,7 +1129,7 @@ func (x *Election) String() string {
 func (*Election) ProtoMessage() {}
 
 func (x *Election) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[18]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1033,7 +1142,7 @@ func (x *Election) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Election.ProtoReflect.Descriptor instead.
 func (*Election) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{18}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Election) GetQuestion() string {
@@ -1093,7 +1202,7 @@ type ElectionView struct {
 func (x *ElectionView) Reset() {
 	*x = ElectionView{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[19]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1106,7 +1215,7 @@ func (x *ElectionView) String() string {
 func (*ElectionView) ProtoMessage() {}
 
 func (x *ElectionView) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[19]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1119,7 +1228,7 @@ func (x *ElectionView) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ElectionView.ProtoReflect.Descriptor instead.
 func (*ElectionView) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{19}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ElectionView) GetQuestion() string {
@@ -1168,7 +1277,7 @@ type SetClose struct {
 func (x *SetClose) Reset() {
 	*x = SetClose{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[20]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1181,7 +1290,7 @@ func (x *SetClose) String() string {
 func (*SetClose) ProtoMessage() {}
 
 func (x *SetClose) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[20]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1194,7 +1303,7 @@ func (x *SetClose) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetClose.ProtoReflect.Descriptor instead.
 func (*SetClose) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{20}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *SetClose) GetClose() *timestamp.Timestamp {
@@ -1216,7 +1325,7 @@ type ModifyFlags struct {
 func (x *ModifyFlags) Reset() {
 	*x = ModifyFlags{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[21]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1229,7 +1338,7 @@ func (x *ModifyFlags) String() string {
 func (*ModifyFlags) ProtoMessage() {}
 
 func (x *ModifyFlags) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[21]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1242,7 +1351,7 @@ func (x *ModifyFlags) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModifyFlags.ProtoReflect.Descriptor instead.
 func (*ModifyFlags) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{21}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ModifyFlags) GetAdd() []Election_Flag {
@@ -1271,7 +1380,7 @@ type UpdateRequest struct {
 func (x *UpdateRequest) Reset() {
 	*x = UpdateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[22]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1284,7 +1393,7 @@ func (x *UpdateRequest) String() string {
 func (*UpdateRequest) ProtoMessage() {}
 
 func (x *UpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[22]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1297,7 +1406,7 @@ func (x *UpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRequest) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{22}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UpdateRequest) GetKey() string {
@@ -1325,7 +1434,7 @@ type UpdateResponse struct {
 func (x *UpdateResponse) Reset() {
 	*x = UpdateResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[23]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1338,7 +1447,7 @@ func (x *UpdateResponse) String() string {
 func (*UpdateResponse) ProtoMessage() {}
 
 func (x *UpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[23]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1351,7 +1460,7 @@ func (x *UpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateResponse.ProtoReflect.Descriptor instead.
 func (*UpdateResponse) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{23}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UpdateResponse) GetElection() *Election {
@@ -1374,7 +1483,7 @@ type VoteRequest struct {
 func (x *VoteRequest) Reset() {
 	*x = VoteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[24]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1387,7 +1496,7 @@ func (x *VoteRequest) String() string {
 func (*VoteRequest) ProtoMessage() {}
 
 func (x *VoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[24]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1400,7 +1509,7 @@ func (x *VoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VoteRequest.ProtoReflect.Descriptor instead.
 func (*VoteRequest) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{24}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *VoteRequest) GetBallotKey() string {
@@ -1433,7 +1542,7 @@ type VoteResponse struct {
 func (x *VoteResponse) Reset() {
 	*x = VoteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[25]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1446,7 +1555,7 @@ func (x *VoteResponse) String() string {
 func (*VoteResponse) ProtoMessage() {}
 
 func (x *VoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[25]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1459,7 +1568,7 @@ func (x *VoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VoteResponse.ProtoReflect.Descriptor instead.
 func (*VoteResponse) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{25}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{27}
 }
 
 type UpdateRequest_Operation struct {
@@ -1476,7 +1585,7 @@ type UpdateRequest_Operation struct {
 func (x *UpdateRequest_Operation) Reset() {
 	*x = UpdateRequest_Operation{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pb_rvapi_rvapi_proto_msgTypes[26]
+		mi := &file_pb_rvapi_rvapi_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1489,7 +1598,7 @@ func (x *UpdateRequest_Operation) String() string {
 func (*UpdateRequest_Operation) ProtoMessage() {}
 
 func (x *UpdateRequest_Operation) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_rvapi_rvapi_proto_msgTypes[26]
+	mi := &file_pb_rvapi_rvapi_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1502,7 +1611,7 @@ func (x *UpdateRequest_Operation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRequest_Operation.ProtoReflect.Descriptor instead.
 func (*UpdateRequest_Operation) Descriptor() ([]byte, []int) {
-	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{22, 0}
+	return file_pb_rvapi_rvapi_proto_rawDescGZIP(), []int{24, 0}
 }
 
 func (m *UpdateRequest_Operation) GetOperation() isUpdateRequest_Operation_Operation {
@@ -1568,6 +1677,18 @@ var file_pb_rvapi_rvapi_proto_rawDesc = []byte{
 	0x6f, 0x6e, 0x56, 0x69, 0x65, 0x77, 0x52, 0x09, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
 	0x73, 0x22, 0x10, 0x0a, 0x0e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x22, 0x11, 0x0a, 0x0f, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xa3, 0x01, 0x0a, 0x15, 0x54, 0x72, 0x75, 0x73, 0x74,
+	0x65, 0x64, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x1b, 0x0a, 0x09, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x08, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x1b, 0x0a,
+	0x09, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x38, 0x0a, 0x09, 0x74, 0x69,
+	0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
+	0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73,
+	0x74, 0x61, 0x6d, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x64, 0x69, 0x67, 0x65, 0x73, 0x74, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x0c, 0x52, 0x06, 0x64, 0x69, 0x67, 0x65, 0x73, 0x74, 0x22, 0x18, 0x0a, 0x16,
+	0x54, 0x72, 0x75, 0x73, 0x74, 0x65, 0x64, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x52, 0x65,
 	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x40, 0x0a, 0x0d, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74,
 	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x61, 0x6c,
@@ -1678,41 +1799,46 @@ var file_pb_rvapi_rvapi_proto_rawDesc = []byte{
 	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
 	0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x68, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x18, 0x03,
 	0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x63, 0x68, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x22, 0x0e, 0x0a,
-	0x0c, 0x56, 0x6f, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xef, 0x03,
+	0x0c, 0x56, 0x6f, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xbe, 0x04,
 	0x0a, 0x04, 0x52, 0x56, 0x65, 0x72, 0x12, 0x38, 0x0a, 0x07, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49,
 	0x6e, 0x12, 0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49,
 	0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69,
 	0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x35, 0x0a, 0x06, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x12, 0x14, 0x2e, 0x72, 0x76, 0x61,
-	0x70, 0x69, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2c, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x11,
-	0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x12, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x38, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x56, 0x69, 0x65, 0x77,
-	0x12, 0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x56, 0x69, 0x65, 0x77,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e,
-	0x47, 0x65, 0x74, 0x56, 0x69, 0x65, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x2f, 0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x12, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e,
-	0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x72, 0x76,
-	0x61, 0x70, 0x69, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x3e, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x69, 0x65, 0x77, 0x73, 0x12, 0x17, 0x2e,
-	0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x69, 0x65, 0x77, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x4c,
-	0x69, 0x73, 0x74, 0x56, 0x69, 0x65, 0x77, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x35, 0x0a, 0x06, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x12, 0x14, 0x2e, 0x72, 0x76, 0x61,
-	0x70, 0x69, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x35, 0x0a, 0x06, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x12, 0x14, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f,
-	0x0a, 0x04, 0x56, 0x6f, 0x74, 0x65, 0x12, 0x12, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x56,
-	0x6f, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x72, 0x76, 0x61,
-	0x70, 0x69, 0x2e, 0x56, 0x6f, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42,
-	0x21, 0x5a, 0x1f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6a, 0x77,
-	0x69, 0x6c, 0x6e, 0x65, 0x72, 0x2f, 0x72, 0x76, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x72, 0x76, 0x61,
-	0x70, 0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x12, 0x4d, 0x0a, 0x0e, 0x54, 0x72, 0x75, 0x73, 0x74, 0x65, 0x64, 0x43, 0x68, 0x65, 0x63, 0x6b,
+	0x49, 0x6e, 0x12, 0x1c, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x54, 0x72, 0x75, 0x73, 0x74,
+	0x65, 0x64, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x1d, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x54, 0x72, 0x75, 0x73, 0x74, 0x65, 0x64,
+	0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x35, 0x0a, 0x06, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x12, 0x14, 0x2e, 0x72, 0x76, 0x61, 0x70,
+	0x69, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2c, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x11, 0x2e,
+	0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x12, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x38, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x56, 0x69, 0x65, 0x77, 0x12,
+	0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x47, 0x65, 0x74, 0x56, 0x69, 0x65, 0x77, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x47,
+	0x65, 0x74, 0x56, 0x69, 0x65, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f,
+	0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x12, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x4c,
+	0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x72, 0x76, 0x61,
+	0x70, 0x69, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x3e, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x69, 0x65, 0x77, 0x73, 0x12, 0x17, 0x2e, 0x72,
+	0x76, 0x61, 0x70, 0x69, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x69, 0x65, 0x77, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x4c, 0x69,
+	0x73, 0x74, 0x56, 0x69, 0x65, 0x77, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x35, 0x0a, 0x06, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x12, 0x14, 0x2e, 0x72, 0x76, 0x61, 0x70,
+	0x69, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x35, 0x0a, 0x06, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x12, 0x14, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x15, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f, 0x0a,
+	0x04, 0x56, 0x6f, 0x74, 0x65, 0x12, 0x12, 0x2e, 0x72, 0x76, 0x61, 0x70, 0x69, 0x2e, 0x56, 0x6f,
+	0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x13, 0x2e, 0x72, 0x76, 0x61, 0x70,
+	0x69, 0x2e, 0x56, 0x6f, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x21,
+	0x5a, 0x1f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6a, 0x77, 0x69,
+	0x6c, 0x6e, 0x65, 0x72, 0x2f, 0x72, 0x76, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x72, 0x76, 0x61, 0x70,
+	0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1728,7 +1854,7 @@ func file_pb_rvapi_rvapi_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_rvapi_rvapi_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_pb_rvapi_rvapi_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_pb_rvapi_rvapi_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_pb_rvapi_rvapi_proto_goTypes = []interface{}{
 	(ListViewsRequest_Filter)(0),    // 0: rvapi.ListViewsRequest.Filter
 	(Election_Flag)(0),              // 1: rvapi.Election.Flag
@@ -1738,73 +1864,78 @@ var file_pb_rvapi_rvapi_proto_goTypes = []interface{}{
 	(*ListViewsResponse)(nil),       // 5: rvapi.ListViewsResponse
 	(*CheckInRequest)(nil),          // 6: rvapi.CheckInRequest
 	(*CheckInResponse)(nil),         // 7: rvapi.CheckInResponse
-	(*ReportRequest)(nil),           // 8: rvapi.ReportRequest
-	(*ReportResponse)(nil),          // 9: rvapi.ReportResponse
-	(*Report)(nil),                  // 10: rvapi.Report
-	(*RemainingVote)(nil),           // 11: rvapi.RemainingVote
-	(*Round)(nil),                   // 12: rvapi.Round
-	(*Tally)(nil),                   // 13: rvapi.Tally
-	(*GetRequest)(nil),              // 14: rvapi.GetRequest
-	(*GetResponse)(nil),             // 15: rvapi.GetResponse
-	(*GetViewRequest)(nil),          // 16: rvapi.GetViewRequest
-	(*GetViewResponse)(nil),         // 17: rvapi.GetViewResponse
-	(*CreateRequest)(nil),           // 18: rvapi.CreateRequest
-	(*CreateResponse)(nil),          // 19: rvapi.CreateResponse
-	(*Election)(nil),                // 20: rvapi.Election
-	(*ElectionView)(nil),            // 21: rvapi.ElectionView
-	(*SetClose)(nil),                // 22: rvapi.SetClose
-	(*ModifyFlags)(nil),             // 23: rvapi.ModifyFlags
-	(*UpdateRequest)(nil),           // 24: rvapi.UpdateRequest
-	(*UpdateResponse)(nil),          // 25: rvapi.UpdateResponse
-	(*VoteRequest)(nil),             // 26: rvapi.VoteRequest
-	(*VoteResponse)(nil),            // 27: rvapi.VoteResponse
-	(*UpdateRequest_Operation)(nil), // 28: rvapi.UpdateRequest.Operation
-	(*timestamp.Timestamp)(nil),     // 29: google.protobuf.Timestamp
+	(*TrustedCheckInRequest)(nil),   // 8: rvapi.TrustedCheckInRequest
+	(*TrustedCheckInResponse)(nil),  // 9: rvapi.TrustedCheckInResponse
+	(*ReportRequest)(nil),           // 10: rvapi.ReportRequest
+	(*ReportResponse)(nil),          // 11: rvapi.ReportResponse
+	(*Report)(nil),                  // 12: rvapi.Report
+	(*RemainingVote)(nil),           // 13: rvapi.RemainingVote
+	(*Round)(nil),                   // 14: rvapi.Round
+	(*Tally)(nil),                   // 15: rvapi.Tally
+	(*GetRequest)(nil),              // 16: rvapi.GetRequest
+	(*GetResponse)(nil),             // 17: rvapi.GetResponse
+	(*GetViewRequest)(nil),          // 18: rvapi.GetViewRequest
+	(*GetViewResponse)(nil),         // 19: rvapi.GetViewResponse
+	(*CreateRequest)(nil),           // 20: rvapi.CreateRequest
+	(*CreateResponse)(nil),          // 21: rvapi.CreateResponse
+	(*Election)(nil),                // 22: rvapi.Election
+	(*ElectionView)(nil),            // 23: rvapi.ElectionView
+	(*SetClose)(nil),                // 24: rvapi.SetClose
+	(*ModifyFlags)(nil),             // 25: rvapi.ModifyFlags
+	(*UpdateRequest)(nil),           // 26: rvapi.UpdateRequest
+	(*UpdateResponse)(nil),          // 27: rvapi.UpdateResponse
+	(*VoteRequest)(nil),             // 28: rvapi.VoteRequest
+	(*VoteResponse)(nil),            // 29: rvapi.VoteResponse
+	(*UpdateRequest_Operation)(nil), // 30: rvapi.UpdateRequest.Operation
+	(*timestamp.Timestamp)(nil),     // 31: google.protobuf.Timestamp
 }
 var file_pb_rvapi_rvapi_proto_depIdxs = []int32{
-	20, // 0: rvapi.ListResponse.elections:type_name -> rvapi.Election
+	22, // 0: rvapi.ListResponse.elections:type_name -> rvapi.Election
 	0,  // 1: rvapi.ListViewsRequest.filter:type_name -> rvapi.ListViewsRequest.Filter
-	21, // 2: rvapi.ListViewsResponse.elections:type_name -> rvapi.ElectionView
-	10, // 3: rvapi.ReportResponse.report:type_name -> rvapi.Report
-	12, // 4: rvapi.Report.rounds:type_name -> rvapi.Round
-	13, // 5: rvapi.Round.tallies:type_name -> rvapi.Tally
-	20, // 6: rvapi.GetResponse.election:type_name -> rvapi.Election
-	21, // 7: rvapi.GetViewResponse.election:type_name -> rvapi.ElectionView
-	20, // 8: rvapi.CreateResponse.election:type_name -> rvapi.Election
-	29, // 9: rvapi.Election.close:type_name -> google.protobuf.Timestamp
-	1,  // 10: rvapi.Election.flags:type_name -> rvapi.Election.Flag
-	29, // 11: rvapi.ElectionView.close:type_name -> google.protobuf.Timestamp
-	1,  // 12: rvapi.ElectionView.flags:type_name -> rvapi.Election.Flag
-	29, // 13: rvapi.SetClose.close:type_name -> google.protobuf.Timestamp
-	1,  // 14: rvapi.ModifyFlags.add:type_name -> rvapi.Election.Flag
-	1,  // 15: rvapi.ModifyFlags.remove:type_name -> rvapi.Election.Flag
-	28, // 16: rvapi.UpdateRequest.operations:type_name -> rvapi.UpdateRequest.Operation
-	20, // 17: rvapi.UpdateResponse.election:type_name -> rvapi.Election
-	22, // 18: rvapi.UpdateRequest.Operation.set_close:type_name -> rvapi.SetClose
-	23, // 19: rvapi.UpdateRequest.Operation.modify_flags:type_name -> rvapi.ModifyFlags
-	6,  // 20: rvapi.RVer.CheckIn:input_type -> rvapi.CheckInRequest
-	18, // 21: rvapi.RVer.Create:input_type -> rvapi.CreateRequest
-	14, // 22: rvapi.RVer.Get:input_type -> rvapi.GetRequest
-	16, // 23: rvapi.RVer.GetView:input_type -> rvapi.GetViewRequest
-	2,  // 24: rvapi.RVer.List:input_type -> rvapi.ListRequest
-	4,  // 25: rvapi.RVer.ListViews:input_type -> rvapi.ListViewsRequest
-	8,  // 26: rvapi.RVer.Report:input_type -> rvapi.ReportRequest
-	24, // 27: rvapi.RVer.Update:input_type -> rvapi.UpdateRequest
-	26, // 28: rvapi.RVer.Vote:input_type -> rvapi.VoteRequest
-	7,  // 29: rvapi.RVer.CheckIn:output_type -> rvapi.CheckInResponse
-	19, // 30: rvapi.RVer.Create:output_type -> rvapi.CreateResponse
-	15, // 31: rvapi.RVer.Get:output_type -> rvapi.GetResponse
-	17, // 32: rvapi.RVer.GetView:output_type -> rvapi.GetViewResponse
-	3,  // 33: rvapi.RVer.List:output_type -> rvapi.ListResponse
-	5,  // 34: rvapi.RVer.ListViews:output_type -> rvapi.ListViewsResponse
-	9,  // 35: rvapi.RVer.Report:output_type -> rvapi.ReportResponse
-	25, // 36: rvapi.RVer.Update:output_type -> rvapi.UpdateResponse
-	27, // 37: rvapi.RVer.Vote:output_type -> rvapi.VoteResponse
-	29, // [29:38] is the sub-list for method output_type
-	20, // [20:29] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	23, // 2: rvapi.ListViewsResponse.elections:type_name -> rvapi.ElectionView
+	31, // 3: rvapi.TrustedCheckInRequest.timestamp:type_name -> google.protobuf.Timestamp
+	12, // 4: rvapi.ReportResponse.report:type_name -> rvapi.Report
+	14, // 5: rvapi.Report.rounds:type_name -> rvapi.Round
+	15, // 6: rvapi.Round.tallies:type_name -> rvapi.Tally
+	22, // 7: rvapi.GetResponse.election:type_name -> rvapi.Election
+	23, // 8: rvapi.GetViewResponse.election:type_name -> rvapi.ElectionView
+	22, // 9: rvapi.CreateResponse.election:type_name -> rvapi.Election
+	31, // 10: rvapi.Election.close:type_name -> google.protobuf.Timestamp
+	1,  // 11: rvapi.Election.flags:type_name -> rvapi.Election.Flag
+	31, // 12: rvapi.ElectionView.close:type_name -> google.protobuf.Timestamp
+	1,  // 13: rvapi.ElectionView.flags:type_name -> rvapi.Election.Flag
+	31, // 14: rvapi.SetClose.close:type_name -> google.protobuf.Timestamp
+	1,  // 15: rvapi.ModifyFlags.add:type_name -> rvapi.Election.Flag
+	1,  // 16: rvapi.ModifyFlags.remove:type_name -> rvapi.Election.Flag
+	30, // 17: rvapi.UpdateRequest.operations:type_name -> rvapi.UpdateRequest.Operation
+	22, // 18: rvapi.UpdateResponse.election:type_name -> rvapi.Election
+	24, // 19: rvapi.UpdateRequest.Operation.set_close:type_name -> rvapi.SetClose
+	25, // 20: rvapi.UpdateRequest.Operation.modify_flags:type_name -> rvapi.ModifyFlags
+	6,  // 21: rvapi.RVer.CheckIn:input_type -> rvapi.CheckInRequest
+	8,  // 22: rvapi.RVer.TrustedCheckIn:input_type -> rvapi.TrustedCheckInRequest
+	20, // 23: rvapi.RVer.Create:input_type -> rvapi.CreateRequest
+	16, // 24: rvapi.RVer.Get:input_type -> rvapi.GetRequest
+	18, // 25: rvapi.RVer.GetView:input_type -> rvapi.GetViewRequest
+	2,  // 26: rvapi.RVer.List:input_type -> rvapi.ListRequest
+	4,  // 27: rvapi.RVer.ListViews:input_type -> rvapi.ListViewsRequest
+	10, // 28: rvapi.RVer.Report:input_type -> rvapi.ReportRequest
+	26, // 29: rvapi.RVer.Update:input_type -> rvapi.UpdateRequest
+	28, // 30: rvapi.RVer.Vote:input_type -> rvapi.VoteRequest
+	7,  // 31: rvapi.RVer.CheckIn:output_type -> rvapi.CheckInResponse
+	9,  // 32: rvapi.RVer.TrustedCheckIn:output_type -> rvapi.TrustedCheckInResponse
+	21, // 33: rvapi.RVer.Create:output_type -> rvapi.CreateResponse
+	17, // 34: rvapi.RVer.Get:output_type -> rvapi.GetResponse
+	19, // 35: rvapi.RVer.GetView:output_type -> rvapi.GetViewResponse
+	3,  // 36: rvapi.RVer.List:output_type -> rvapi.ListResponse
+	5,  // 37: rvapi.RVer.ListViews:output_type -> rvapi.ListViewsResponse
+	11, // 38: rvapi.RVer.Report:output_type -> rvapi.ReportResponse
+	27, // 39: rvapi.RVer.Update:output_type -> rvapi.UpdateResponse
+	29, // 40: rvapi.RVer.Vote:output_type -> rvapi.VoteResponse
+	31, // [31:41] is the sub-list for method output_type
+	21, // [21:31] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_pb_rvapi_rvapi_proto_init() }
@@ -1886,7 +2017,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReportRequest); i {
+			switch v := v.(*TrustedCheckInRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1898,7 +2029,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReportResponse); i {
+			switch v := v.(*TrustedCheckInResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1910,7 +2041,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Report); i {
+			switch v := v.(*ReportRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1922,7 +2053,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RemainingVote); i {
+			switch v := v.(*ReportResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1934,7 +2065,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Round); i {
+			switch v := v.(*Report); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1946,7 +2077,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Tally); i {
+			switch v := v.(*RemainingVote); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1958,7 +2089,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRequest); i {
+			switch v := v.(*Round); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1970,7 +2101,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetResponse); i {
+			switch v := v.(*Tally); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1982,7 +2113,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetViewRequest); i {
+			switch v := v.(*GetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1994,7 +2125,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetViewResponse); i {
+			switch v := v.(*GetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2006,7 +2137,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateRequest); i {
+			switch v := v.(*GetViewRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2018,7 +2149,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateResponse); i {
+			switch v := v.(*GetViewResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2030,7 +2161,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Election); i {
+			switch v := v.(*CreateRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2042,7 +2173,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ElectionView); i {
+			switch v := v.(*CreateResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2054,7 +2185,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetClose); i {
+			switch v := v.(*Election); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2066,7 +2197,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ModifyFlags); i {
+			switch v := v.(*ElectionView); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2078,7 +2209,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateRequest); i {
+			switch v := v.(*SetClose); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2090,7 +2221,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateResponse); i {
+			switch v := v.(*ModifyFlags); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2102,7 +2233,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VoteRequest); i {
+			switch v := v.(*UpdateRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2114,7 +2245,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VoteResponse); i {
+			switch v := v.(*UpdateResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2126,6 +2257,30 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 		file_pb_rvapi_rvapi_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*VoteRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pb_rvapi_rvapi_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*VoteResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pb_rvapi_rvapi_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateRequest_Operation); i {
 			case 0:
 				return &v.state
@@ -2138,7 +2293,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			}
 		}
 	}
-	file_pb_rvapi_rvapi_proto_msgTypes[26].OneofWrappers = []interface{}{
+	file_pb_rvapi_rvapi_proto_msgTypes[28].OneofWrappers = []interface{}{
 		(*UpdateRequest_Operation_SetClose)(nil),
 		(*UpdateRequest_Operation_ModifyFlags)(nil),
 	}
@@ -2148,7 +2303,7 @@ func file_pb_rvapi_rvapi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_pb_rvapi_rvapi_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   27,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

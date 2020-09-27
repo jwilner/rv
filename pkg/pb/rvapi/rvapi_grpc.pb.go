@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RVerClient interface {
 	CheckIn(ctx context.Context, in *CheckInRequest, opts ...grpc.CallOption) (*CheckInResponse, error)
+	TrustedCheckIn(ctx context.Context, in *TrustedCheckInRequest, opts ...grpc.CallOption) (*TrustedCheckInResponse, error)
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetView(ctx context.Context, in *GetViewRequest, opts ...grpc.CallOption) (*GetViewResponse, error)
@@ -39,6 +40,15 @@ func NewRVerClient(cc grpc.ClientConnInterface) RVerClient {
 func (c *rVerClient) CheckIn(ctx context.Context, in *CheckInRequest, opts ...grpc.CallOption) (*CheckInResponse, error) {
 	out := new(CheckInResponse)
 	err := c.cc.Invoke(ctx, "/rvapi.RVer/CheckIn", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rVerClient) TrustedCheckIn(ctx context.Context, in *TrustedCheckInRequest, opts ...grpc.CallOption) (*TrustedCheckInResponse, error) {
+	out := new(TrustedCheckInResponse)
+	err := c.cc.Invoke(ctx, "/rvapi.RVer/TrustedCheckIn", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +132,7 @@ func (c *rVerClient) Vote(ctx context.Context, in *VoteRequest, opts ...grpc.Cal
 // for forward compatibility
 type RVerServer interface {
 	CheckIn(context.Context, *CheckInRequest) (*CheckInResponse, error)
+	TrustedCheckIn(context.Context, *TrustedCheckInRequest) (*TrustedCheckInResponse, error)
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetView(context.Context, *GetViewRequest) (*GetViewResponse, error)
@@ -139,6 +150,9 @@ type UnimplementedRVerServer struct {
 
 func (*UnimplementedRVerServer) CheckIn(context.Context, *CheckInRequest) (*CheckInResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckIn not implemented")
+}
+func (*UnimplementedRVerServer) TrustedCheckIn(context.Context, *TrustedCheckInRequest) (*TrustedCheckInResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TrustedCheckIn not implemented")
 }
 func (*UnimplementedRVerServer) Create(context.Context, *CreateRequest) (*CreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
@@ -184,6 +198,24 @@ func _RVer_CheckIn_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RVerServer).CheckIn(ctx, req.(*CheckInRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RVer_TrustedCheckIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TrustedCheckInRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RVerServer).TrustedCheckIn(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rvapi.RVer/TrustedCheckIn",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RVerServer).TrustedCheckIn(ctx, req.(*TrustedCheckInRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -339,6 +371,10 @@ var _RVer_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckIn",
 			Handler:    _RVer_CheckIn_Handler,
+		},
+		{
+			MethodName: "TrustedCheckIn",
+			Handler:    _RVer_TrustedCheckIn_Handler,
 		},
 		{
 			MethodName: "Create",

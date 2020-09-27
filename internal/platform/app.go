@@ -18,6 +18,8 @@ type handler struct {
 	tzes []string
 	tokM *tokenManager
 
+	clientKeys map[string]*rvapi.Digester
+
 	tokLife time.Duration
 }
 

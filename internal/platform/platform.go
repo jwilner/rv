@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -27,24 +28,27 @@ import (
 	"github.com/jwilner/rv/pkg/pb/rvapi"
 )
 
+type Config struct {
+	Debug                                        bool
+	DBURL, Addr, GRPCAddr, StaticDir, SigningKey string
+	TokenLength                                  time.Duration
+	Slack                                        slack.Config
+}
+
 // Run runs the application, connecting to the database at dbURL and listening for HTTP at the provided address.
-func Run(
-	debug bool,
-	dbURL, addr, grpcAddr, staticDir, signingKey, slackToken, slackSigningSecret string,
-	tokLength time.Duration,
-) error {
-	// construct an r ctx that we can cancel
+func Run(config *Config) error {
+	// construct a ctx that we can cancel
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
 
-	ctx = setDebug(ctx, debug)
+	ctx = setDebug(ctx, config.Debug)
 
 	// cancel it if interrupted
 	cancelOnSignal(ctx, cncl, os.Interrupt)
 
-	tokM := &tokenManager{signingKey: []byte(signingKey)}
+	tokM := &tokenManager{signingKey: []byte(config.SigningKey)}
 
-	h, err := newHandler(ctx, tokM, dbURL, tokLength)
+	h, err := newHandler(ctx, tokM, config.DBURL, config.TokenLength)
 	if err != nil {
 		return err
 	}
@@ -54,11 +58,9 @@ func Run(
 		}
 	}()
 
-	server := newGRPCServer(tokM, h)
-
 	var grpcL net.Listener
-	if grpcAddr != "" {
-		if grpcL, err = net.Listen("tcp", grpcAddr); err != nil {
+	if config.GRPCAddr != "" {
+		if grpcL, err = net.Listen("tcp", config.GRPCAddr); err != nil {
 			return err
 		}
 		defer func() {
@@ -67,15 +69,15 @@ func Run(
 	}
 
 	var staticMux http.Handler
-	if staticDir != "" {
-		staticMux = http.FileServer(http.Dir(staticDir))
+	if config.StaticDir != "" {
+		staticMux = http.FileServer(http.Dir(config.StaticDir))
 	}
 
 	var (
 		slackMux  http.Handler
 		grpcUnixL net.Listener
 	)
-	if slackToken != "" {
+	if config.Slack.Token != "" {
 		dir, err := ioutil.TempDir("", "rv*")
 		if err != nil {
 			return err
@@ -101,11 +103,13 @@ func Run(
 			_ = conn.Close()
 		}()
 
-		slackMux = slack.New(slackToken, slackSigningSecret, conn)
+		slackMux = slack.New(&config.Slack, conn)
 	}
 
+	server := newGRPCServer(tokM, h)
+
 	mux := http.Handler(buildMux(server, staticMux, slackMux))
-	if debug {
+	if config.Debug {
 		mux = logMiddleware(mux)
 	}
 	mux = tokenMiddleware(mux)
@@ -113,35 +117,37 @@ func Run(
 
 	errC := make(chan error, 3)
 
+	var wg sync.WaitGroup
+
 	if grpcL != nil {
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			select {
-			case errC <- server.Serve(grpcL):
+			case errC <- listenAndServeGRPC(ctx, server, grpcL):
 			case <-ctx.Done():
-				select {
-				case errC <- ctx.Err():
-				default:
-				}
+				errC <- ctx.Err()
 			}
 		}()
 	}
 
 	if grpcUnixL != nil {
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			select {
-			case errC <- server.Serve(grpcUnixL):
+			case errC <- listenAndServeGRPC(ctx, server, grpcUnixL):
 			case <-ctx.Done():
-				select {
-				case errC <- ctx.Err():
-				default:
-				}
+				errC <- ctx.Err()
 			}
 		}()
 	}
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		select {
-		case errC <- listenAndServe(ctx, addr, mux):
+		case errC <- listenAndServe(ctx, config.Addr, mux):
 		case <-ctx.Done():
 			select {
 			case errC <- ctx.Err():
@@ -150,6 +156,8 @@ func Run(
 		}
 	}()
 
+	// return first error and wait for all to complete
+	defer wg.Wait()
 	return <-errC
 }
 
@@ -337,6 +345,29 @@ func connectDB(ctx context.Context, url string) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func listenAndServeGRPC(ctx context.Context, server *grpc.Server, l net.Listener) error {
+	errs := make(chan error, 1)
+	go func() {
+		errs <- server.Serve(l)
+	}()
+	select {
+	case <-ctx.Done():
+		done := make(chan struct{}, 1)
+		go func() {
+			server.GracefulStop()
+			done <- struct{}{}
+		}()
+		select {
+		case <-time.After(5 * time.Second):
+			server.Stop()
+		case <-done:
+		}
+		return ctx.Err()
+	case err := <-errs:
+		return err
+	}
 }
 
 func listenAndServe(ctx context.Context, addr string, handler http.Handler) error {

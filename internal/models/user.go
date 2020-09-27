@@ -45,15 +45,18 @@ var UserWhere = struct {
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
+	Aliases   string
 	Elections string
 	Votes     string
 }{
+	Aliases:   "Aliases",
 	Elections: "Elections",
 	Votes:     "Votes",
 }
 
 // userR is where relationships are stored.
 type userR struct {
+	Aliases   AliasSlice    `boil:"Aliases" json:"Aliases" toml:"Aliases" yaml:"Aliases"`
 	Elections ElectionSlice `boil:"Elections" json:"Elections" toml:"Elections" yaml:"Elections"`
 	Votes     VoteSlice     `boil:"Votes" json:"Votes" toml:"Votes" yaml:"Votes"`
 }
@@ -164,6 +167,27 @@ func (q userQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
+// Aliases retrieves all the alias's Aliases with an executor.
+func (o *User) Aliases(mods ...qm.QueryMod) aliasQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"rv\".\"alias\".\"user_id\"=?", o.ID),
+	)
+
+	query := Aliases(queryMods...)
+	queries.SetFrom(query.Query, "\"rv\".\"alias\"")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"\"rv\".\"alias\".*"})
+	}
+
+	return query
+}
+
 // Elections retrieves all the election's Elections with an executor.
 func (o *User) Elections(mods ...qm.QueryMod) electionQuery {
 	var queryMods []qm.QueryMod
@@ -204,6 +228,87 @@ func (o *User) Votes(mods ...qm.QueryMod) voteQuery {
 	}
 
 	return query
+}
+
+// LoadAliases allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadAliases(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		object = maybeUser.(*User)
+	} else {
+		slice = *maybeUser.(*[]*User)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`rv.alias`),
+		qm.WhereIn(`rv.alias.user_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load alias")
+	}
+
+	var resultSlice []*Alias
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice alias")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on alias")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for alias")
+	}
+
+	if singular {
+		object.R.Aliases = resultSlice
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.Aliases = append(local.R.Aliases, foreign)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadElections allows an eager lookup of values, cached into the
@@ -365,6 +470,59 @@ func (userL) LoadVotes(ctx context.Context, e boil.ContextExecutor, singular boo
 		}
 	}
 
+	return nil
+}
+
+// AddAliases adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.Aliases.
+// Sets related.R.User appropriately.
+func (o *User) AddAliases(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Alias) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"rv\".\"alias\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, aliasPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			Aliases: related,
+		}
+	} else {
+		o.R.Aliases = append(o.R.Aliases, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &aliasR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
 	return nil
 }
 

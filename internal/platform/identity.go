@@ -88,6 +88,10 @@ func tokenInterceptor(tokM *tokenManager) grpc.UnaryServerInterceptor {
 	}
 }
 
+func newClaims(userID int64) *Claims {
+	return &Claims{jwt.StandardClaims{Subject: strconv.FormatInt(userID, 16)}}
+}
+
 type Claims struct {
 	jwt.StandardClaims
 }
@@ -99,18 +103,68 @@ func (c *Claims) Valid() error {
 	return c.StandardClaims.Valid()
 }
 
+func (h *handler) TrustedCheckIn(
+	ctx context.Context,
+	req *rvapi.TrustedCheckInRequest,
+) (*rvapi.TrustedCheckInResponse, error) {
+	var claims *Claims
+	err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		client, err := models.Clients(models.ClientWhere.Name.EQ(req.ClientId)).One(ctx, tx)
+		if errors.Is(err, sql.ErrNoRows) {
+			return status.Error(codes.InvalidArgument, "Unknown client id")
+		} else if err != nil {
+			return err
+		} else if !rvapi.Valid(req, time.Now(), client.Secret) {
+			return status.Error(codes.Unauthenticated, "Invalid message")
+		}
+
+		alias, err := client.Aliases(models.AliasWhere.Alias.EQ(req.UserName)).One(ctx, tx)
+		if notFound := errors.Is(err, sql.ErrNoRows); err != nil && !notFound {
+			return err
+		} else if notFound {
+			var user models.User
+			if err = user.Insert(ctx, tx, boil.Infer()); err != nil {
+				return err
+			}
+
+			alias = &models.Alias{ClientID: client.ID, UserID: user.ID, Alias: req.UserName}
+			if err = alias.Insert(ctx, tx, boil.Infer()); err != nil {
+				return err
+			}
+		}
+
+		claims = newClaims(alias.UserID)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err := h.sendUpdatedClaims(ctx, claims); err != nil {
+		return nil, err
+	}
+	return &rvapi.TrustedCheckInResponse{}, nil
+}
+
 func (h *handler) CheckIn(ctx context.Context, _ *rvapi.CheckInRequest) (*rvapi.CheckInResponse, error) {
 	claims := loadClaims(ctx)
 	if claims == nil {
-		claims = new(Claims)
-		var err error
-		if claims.Subject, err = h.newSubjectID(ctx); err != nil {
+		var u models.User
+		if err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+			return u.Insert(ctx, tx, boil.Infer())
+		}); err != nil {
 			return nil, err
 		}
+		claims = newClaims(u.ID)
 	}
+	if err := h.sendUpdatedClaims(ctx, claims); err != nil {
+		return nil, err
+	}
+	return &rvapi.CheckInResponse{}, nil
+}
 
-	// extend
-	now := time.Now()
+func (h *handler) sendUpdatedClaims(ctx context.Context, claims *Claims) error {
+	now := time.Now().Truncate(time.Second)
+
 	exp := now.Add(h.tokLife)
 
 	claims.IssuedAt = now.Unix()
@@ -119,9 +173,10 @@ func (h *handler) CheckIn(ctx context.Context, _ *rvapi.CheckInRequest) (*rvapi.
 
 	tok, err := h.tokM.write(claims)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
+	// returns immediately if not a grpc web proxy req
 	if err := setIdentityTokenCookie(ctx, &http.Cookie{
 		Name:     "rv-token",
 		Value:    tok,
@@ -131,22 +186,10 @@ func (h *handler) CheckIn(ctx context.Context, _ *rvapi.CheckInRequest) (*rvapi.
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	}); err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := grpc.SendHeader(ctx, metadata.Pairs("rv-token", tok)); err != nil {
-		return nil, err
-	}
-
-	return &rvapi.CheckInResponse{}, nil
-}
-
-func (h *handler) newSubjectID(ctx context.Context) (string, error) {
-	var u models.User
-	err := h.txM.inTx(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
-		return u.Insert(ctx, tx, boil.Infer())
-	})
-	return strconv.FormatInt(u.ID, 16), err
+	return grpc.SendHeader(ctx, metadata.Pairs("rv-token", tok))
 }
 
 type cookieRequest struct {

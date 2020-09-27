@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/slack-go/slack"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -20,16 +21,26 @@ import (
 	"github.com/jwilner/rv/pkg/pb/rvapi"
 )
 
+// Config encapsulates all of the slack concerns; all arguments are required
+type Config struct {
+	// Oauth token issued by slack
+	Token string
+	// SigningSecret issued by slack for verification of incoming messages
+	SigningSecret string
+	// ClientID / ClientSecret for internal comms with Rver
+	ClientID, ClientSecret string
+}
+
 // New returns a mux that serve slack interactive commands at `/interactive` and slash commands at `/slashcommand`.
 // The mux performs slack signing verification per https://api.slack.com/authentication/verifying-requests-from-slack
-func New(token, signingSecret string, conn *grpc.ClientConn) http.Handler {
-	h := newHandler(token, conn)
+func New(cfg *Config, conn *grpc.ClientConn) http.Handler {
+	h := newHandler(cfg.Token, cfg.ClientID, cfg.ClientSecret, conn)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/interactive", h.ServeInteractive)
 	mux.HandleFunc("/slashcommand", h.ServeSlashCommand)
 
-	return slackVerifyMiddleware(signingSecret, mux)
+	return slackVerifyMiddleware(cfg.SigningSecret, mux)
 }
 
 // slackVerifyMiddleware verifies that every inbound request on this handler matches the slack validation logic
@@ -86,13 +97,20 @@ func slackVerifyMiddleware(signingSecret string, next http.Handler) http.Handler
 	})
 }
 
-func newHandler(token string, conn *grpc.ClientConn) *handler {
-	return &handler{slack: slack.New(token), rver: rvapi.NewRVerClient(conn)}
+func newHandler(token, clientID, clientSecret string, conn *grpc.ClientConn) *handler {
+	return &handler{
+		slack:    slack.New(token),
+		rver:     rvapi.NewRVerClient(conn),
+		digester: rvapi.NewDigester(clientSecret),
+		clientID: clientID,
+	}
 }
 
 type handler struct {
-	slack *slack.Client
-	rver  rvapi.RVerClient
+	slack    *slack.Client
+	rver     rvapi.RVerClient
+	digester *rvapi.Digester
+	clientID string
 }
 
 func (h *handler) ServeInteractive(w http.ResponseWriter, r *http.Request) {
@@ -150,10 +168,17 @@ func (h *handler) handleAsync(ic *slack.InteractionCallback) {
 	}
 }
 
-func (h *handler) checkIn(ctx context.Context) (context.Context, error) {
+func (h *handler) checkIn(ctx context.Context, userID string) (context.Context, error) {
+	r := rvapi.TrustedCheckInRequest{
+		ClientId:  h.clientID,
+		UserName:  userID,
+		Timestamp: ptypes.TimestampNow(),
+	}
+	if err := h.digester.SetDigest(&r); err != nil {
+		return nil, err
+	}
 	var md metadata.MD
-	_, err := h.rver.CheckIn(ctx, &rvapi.CheckInRequest{}, grpc.Header(&md))
-	if err != nil {
+	if _, err := h.rver.TrustedCheckIn(ctx, &r, grpc.Header(&md)); err != nil {
 		return nil, err
 	}
 	return metadata.AppendToOutgoingContext(ctx, "rv-token", md["rv-token"][0]), nil
@@ -166,7 +191,7 @@ func (h *handler) handleCreateView(ctx context.Context, ic *slack.InteractionCal
 	}
 
 	var err error
-	if ctx, err = h.checkIn(ctx); err != nil {
+	if ctx, err = h.checkIn(ctx, ic.User.ID); err != nil {
 		return fmt.Errorf("unable to check in: %w", err)
 	}
 
@@ -272,7 +297,7 @@ func (h *handler) handleVote(ctx context.Context, ic *slack.InteractionCallback)
 		return errors.New("invalid view")
 	}
 	var err error
-	if ctx, err = h.checkIn(ctx); err != nil {
+	if ctx, err = h.checkIn(ctx, ic.User.ID); err != nil {
 		return fmt.Errorf("checkIn: %w", err)
 	}
 	_, err = h.rver.Vote(ctx, req)
@@ -305,7 +330,7 @@ func (h *handler) handleVote(ctx context.Context, ic *slack.InteractionCallback)
 func viewToVoteRequest(ballotKey string, ic *slack.InteractionCallback) *rvapi.VoteRequest {
 	vote := rvapi.VoteRequest{
 		BallotKey: ballotKey,
-		Name:      ic.User.Name,
+		Name:      "slack:" + ic.User.ID,
 	}
 	for _, r := range ic.View.Blocks.BlockSet {
 		i, ok := r.(*slack.InputBlock)

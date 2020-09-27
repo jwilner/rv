@@ -8,6 +8,7 @@ option go_package = "github.com/jwilner/rv/pkg/rvapi";
 
 service RVer {
     rpc CheckIn (CheckInRequest) returns (CheckInResponse);
+    rpc TrustedCheckIn (TrustedCheckInRequest) returns (TrustedCheckInResponse);
 
     rpc Create (CreateRequest) returns (CreateResponse);
     rpc Get (GetRequest) returns (GetResponse);
@@ -44,6 +45,16 @@ message CheckInRequest {
 }
 
 message CheckInResponse {
+}
+
+message TrustedCheckInRequest {
+    string client_id = 1;
+    string user_name = 2;
+    google.protobuf.Timestamp timestamp = 3;
+    bytes digest = 4;
+}
+
+message TrustedCheckInResponse {
 }
 
 message ReportRequest {
