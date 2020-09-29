@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/jwilner/rv/pkg/pb/rvapi"
@@ -83,7 +84,24 @@ func Test_calculateReport(t *testing.T) {
 			if tt.want.Winners == nil {
 				tt.want.Winners = make([]string, 0)
 			}
-			require.Equal(t, tt.want, calculateReport(tt.vs, 1))
+			var (
+				choices []string
+				seen    = make(map[string]bool)
+			)
+			for i := range tt.vs {
+				for _, c := range tt.vs[i].Choices {
+					if !seen[c] {
+						choices = append(choices, c)
+						seen[c] = true
+					}
+				}
+			}
+			sort.Strings(choices)
+			ordering := make(map[string]int)
+			for i, c := range choices {
+				ordering[c] = i
+			}
+			require.Equal(t, tt.want, calculateReport(ordering, tt.vs, 1))
 		})
 	}
 }

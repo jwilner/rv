@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"math/rand"
 	"sort"
 
 	"github.com/jwilner/rv/pkg/pb/rvapi"
@@ -13,9 +14,11 @@ import (
 )
 
 func (h *handler) Report(ctx context.Context, req *rvapi.ReportRequest) (*rvapi.ReportResponse, error) {
-	var votes []*models.Vote
+	var (
+		el    *models.Election
+		votes []*models.Vote
+	)
 	err := h.txM.inTx(ctx, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx *sql.Tx) (err error) {
-		var el *models.Election
 		if req.Key != "" {
 			if el, err = models.Elections(models.ElectionWhere.Key.EQ(req.Key)).One(ctx, tx); err != nil {
 				return fmt.Errorf("models.Elections key=%v: %w", req.Key, err)
@@ -33,14 +36,32 @@ func (h *handler) Report(ctx context.Context, req *rvapi.ReportRequest) (*rvapi.
 	if err != nil {
 		return nil, err
 	}
-	return &rvapi.ReportResponse{Report: calculateReport(votes, 1)}, nil
+
+	choices := make([]string, len(el.Choices))
+	copy(choices, el.Choices)
+	sort.Strings(choices)
+
+	// shuffle the choices so that they are random but always in the same order for a given election
+	rand.
+		New(rand.NewSource(el.CreatedAt.Time.UnixNano())).
+		Shuffle(len(choices), func(i, j int) {
+			choices[i], choices[j] = choices[j], choices[i]
+		})
+
+	ordering := make(map[string]int, len(choices))
+	for i, c := range choices {
+		ordering[c] = i
+	}
+
+	return &rvapi.ReportResponse{Report: calculateReport(ordering, votes, 1)}, nil
 }
 
-func calculateReport(vs []*models.Vote, numWinners int) *rvapi.Report {
+func calculateReport(ordering map[string]int, vs []*models.Vote, numWinners int) *rvapi.Report {
 	type vote struct {
-		name        string
-		choices     []string
-		coefficient float64
+		name    string
+		choices []string
+		// vote value diminishes as a voter's first choices are selected
+		value float64
 	}
 
 	votes := make([]*vote, 0, len(vs))
@@ -56,7 +77,7 @@ func calculateReport(vs []*models.Vote, numWinners int) *rvapi.Report {
 	for len(r.Winners) < numWinners && len(votes) > 0 {
 		counted := make(map[string]float64)
 		for _, v := range votes {
-			counted[v.choices[0]] += v.coefficient
+			counted[v.choices[0]] += v.value
 		}
 
 		round := rvapi.Round{Tallies: make([]*rvapi.Tally, 0, len(counted))}
@@ -66,7 +87,7 @@ func calculateReport(vs []*models.Vote, numWinners int) *rvapi.Report {
 		}
 		r.Rounds = append(r.Rounds, &round)
 
-		sort.Sort(sort.Reverse(sortableTallies(round.Tallies)))
+		sort.Sort(sort.Reverse(&sortableTallies{round.Tallies, ordering}))
 
 		var didElect bool
 		for i := 0; i < len(round.Tallies) && round.Tallies[i].Count >= quota && len(r.Winners) < numWinners; i++ {
@@ -97,7 +118,7 @@ func calculateReport(vs []*models.Vote, numWinners int) *rvapi.Report {
 				votes[cur] = v
 				cur++
 				if idx == 0 {
-					v.coefficient *= transferValue
+					v.value *= transferValue
 				}
 			}
 			votes = votes[:cur]
@@ -138,16 +159,20 @@ func calculateReport(vs []*models.Vote, numWinners int) *rvapi.Report {
 	return r
 }
 
-type sortableTallies []*rvapi.Tally
-
-func (c sortableTallies) Len() int {
-	return len(c)
+type sortableTallies struct {
+	tallies  []*rvapi.Tally
+	ordering map[string]int
 }
 
-func (c sortableTallies) Less(i, j int) bool {
-	return c[i].Count < c[j].Count || (c[i].Count == c[j].Count && c[i].Choice < c[j].Choice)
+func (c *sortableTallies) Len() int {
+	return len(c.tallies)
 }
 
-func (c sortableTallies) Swap(i, j int) {
-	c[i], c[j] = c[j], c[i]
+func (c *sortableTallies) Less(i, j int) bool {
+	t := c.tallies
+	return t[i].Count < t[j].Count || (t[i].Count == t[j].Count && c.ordering[t[i].Choice] < c.ordering[t[j].Choice])
+}
+
+func (c *sortableTallies) Swap(i, j int) {
+	c.tallies[i], c.tallies[j] = c.tallies[j], c.tallies[i]
 }
