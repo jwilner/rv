@@ -54,7 +54,7 @@ func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.Vote
 			return detailedErr(codes.FailedPrecondition, "election has already closed")
 		}
 		if undefined := difference(norm, normalize(el.Choices)); len(undefined) > 0 {
-			return invalidArgument("unknown choices", "Choices", "unknown choices")
+			return invalidArgument("unknown tallies", "Choices", "unknown tallies")
 		}
 		v := models.Vote{
 			ElectionID: el.ID,

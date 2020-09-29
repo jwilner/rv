@@ -20,10 +20,11 @@ func Test_calculateReport(t *testing.T) {
 
 	round := func(overallVotes int32, vals ...interface{}) *rvapi.Round {
 		r := rvapi.Round{OverallVotes: overallVotes}
-		for i := 0; i < len(vals); i += 2 {
+		for i := 0; i < len(vals); i += 3 {
 			r.Tallies = append(r.Tallies, &rvapi.Tally{
-				Choice: vals[i].(string),
-				Count:  int32(vals[i+1].(int)),
+				Choice:  vals[i].(string),
+				Count:   vals[i+1].(float64),
+				Outcome: vals[i+2].(rvapi.Tally_Outcome),
 			})
 		}
 		return &r
@@ -39,21 +40,21 @@ func Test_calculateReport(t *testing.T) {
 		{
 			name: "one vote",
 			vs:   v{{Name: "jack", Choices: sa{"bob"}}},
-			want: &r{Winner: "bob", Rounds: s{round(1, "bob", 1)}}},
+			want: &r{Rounds: s{round(1, "bob", 1., rvapi.Tally_ELECTED)}, Winners: sa{"bob"}}},
 		{
 			name: "agreeing vote",
 			vs:   v{{Name: "jack", Choices: sa{"bob"}}, {Name: "jill", Choices: sa{"bob"}}},
-			want: &r{Winner: "bob", Rounds: s{round(2, "bob", 2)}},
+			want: &r{Rounds: s{round(2, "bob", 2., rvapi.Tally_ELECTED)}, Winners: sa{"bob"}},
 		},
 		{
 			name: "disagreeing vote eliminates lexicographically least choice",
 			vs:   v{{Name: "jack", Choices: sa{"bob"}}, {Name: "jill", Choices: sa{"bill"}}},
 			want: &r{
-				Winner: "bob",
 				Rounds: s{
-					round(2, "bob", 1, "bill", 1),
-					round(1, "bob", 1),
+					round(2, "bob", 1., rvapi.Tally_UNKNOWN, "bill", 1., rvapi.Tally_ELIMINATED),
+					round(1, "bob", 1., rvapi.Tally_ELECTED),
 				},
+				Winners: []string{"bob"},
 			},
 		},
 		{
@@ -64,17 +65,25 @@ func Test_calculateReport(t *testing.T) {
 				{Name: "jon", Choices: sa{"Barbs", "bill"}},
 			},
 			want: &r{
-				Winner: "bill",
 				Rounds: s{
-					round(3, "bob", 1, "bill", 1, "Barbs", 1),
-					round(3, "bill", 2, "bob", 1),
+					round(
+						3,
+						"bob", 1., rvapi.Tally_UNKNOWN,
+						"bill", 1., rvapi.Tally_UNKNOWN,
+						"Barbs", 1., rvapi.Tally_ELIMINATED,
+					),
+					round(3, "bill", 2., rvapi.Tally_ELECTED, "bob", 1., rvapi.Tally_UNKNOWN),
 				},
+				Winners: []string{"bill"},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, calculateReport(tt.vs))
+			if tt.want.Winners == nil {
+				tt.want.Winners = make([]string, 0)
+			}
+			require.Equal(t, tt.want, calculateReport(tt.vs, 1))
 		})
 	}
 }

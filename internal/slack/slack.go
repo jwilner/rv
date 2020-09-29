@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -538,22 +539,45 @@ func renderElection(el election, rep *rvapi.Report) []slack.Block {
 		},
 	}
 
-	if rep != nil && rep.Winner != "" {
+	if rep != nil && len(rep.Winners) > 0 {
 		rounds := rep.Rounds
 		var b strings.Builder
 		printf := func(format string, args ...interface{}) {
 			_, _ = fmt.Fprintf(&b, format, args...)
 		}
-		if len(rounds) == 1 {
-			printf(":tada::tada::tada: Winner after 1 round: %v :tada::tada::tada:\n\n", rep.Winner)
-		} else {
-			printf(":tada::tada::tada: Winner after %d rounds: %v :tada::tada::tada:\n\n", len(rounds), rep.Winner)
+
+		winnerTxt := "Winner"
+		winnerNames := rep.Winners[0]
+		if len(rep.Winners) > 0 {
+			winnerTxt = "Winners"
+			last := len(rep.Winners) - 1
+			winnerNames = strings.Join(rep.Winners[:last], ", ") + " and " + rep.Winners[last]
 		}
+		roundTxt := "round"
+		if len(rep.Rounds) != 1 {
+			roundTxt = "rounds"
+		}
+
+		_, _ = fmt.Fprintf(
+			&b,
+			":tada::tada::tada: %v after %d %v: %v :tada::tada::tada:\n",
+			winnerTxt,
+			len(rep.Rounds),
+			roundTxt,
+			winnerNames,
+		)
 
 		for i := len(rounds) - 1; i >= 0; i-- {
 			printf("*Round %d*:\n", i+1)
 			for _, t := range rounds[i].Tallies {
-				printf("- %v: %v\n", t.Choice, t.Count)
+				var comment string
+				switch t.Outcome {
+				case rvapi.Tally_ELECTED:
+					comment = " (elected!)"
+				case rvapi.Tally_ELIMINATED:
+					comment = " (eliminated!)"
+				}
+				printf("- %v: %.02f%v\n", t.Choice, math.Floor(t.Count/.05)*.05, comment)
 			}
 		}
 

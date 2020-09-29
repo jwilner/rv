@@ -67,8 +67,8 @@ message ReportResponse {
 }
 
 message Report {
-    string winner = 1;
-    repeated Round rounds = 2;
+    repeated Round rounds = 1;
+    repeated string winners = 2;
 }
 
 message RemainingVote {
@@ -82,8 +82,14 @@ message Round {
 }
 
 message Tally {
+    enum Outcome {
+        UNKNOWN = 0;
+        ELECTED = 1;
+        ELIMINATED = 2;
+    }
     string choice = 1;
-    int32 count = 2;
+    double count = 2;
+    Outcome outcome = 3;
 }
 
 message GetRequest {

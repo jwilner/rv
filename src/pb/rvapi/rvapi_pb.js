@@ -38,6 +38,7 @@ goog.exportSymbol('proto.rvapi.ReportResponse', null, global);
 goog.exportSymbol('proto.rvapi.Round', null, global);
 goog.exportSymbol('proto.rvapi.SetClose', null, global);
 goog.exportSymbol('proto.rvapi.Tally', null, global);
+goog.exportSymbol('proto.rvapi.Tally.Outcome', null, global);
 goog.exportSymbol('proto.rvapi.TrustedCheckInRequest', null, global);
 goog.exportSymbol('proto.rvapi.TrustedCheckInResponse', null, global);
 goog.exportSymbol('proto.rvapi.UpdateRequest', null, global);
@@ -2100,7 +2101,7 @@ proto.rvapi.ReportResponse.prototype.hasReport = function() {
  * @private {!Array<number>}
  * @const
  */
-proto.rvapi.Report.repeatedFields_ = [2];
+proto.rvapi.Report.repeatedFields_ = [1,2];
 
 
 
@@ -2133,9 +2134,9 @@ proto.rvapi.Report.prototype.toObject = function(opt_includeInstance) {
  */
 proto.rvapi.Report.toObject = function(includeInstance, msg) {
   var f, obj = {
-    winner: jspb.Message.getFieldWithDefault(msg, 1, ""),
     roundsList: jspb.Message.toObjectList(msg.getRoundsList(),
-    proto.rvapi.Round.toObject, includeInstance)
+    proto.rvapi.Round.toObject, includeInstance),
+    winnersList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -2173,13 +2174,13 @@ proto.rvapi.Report.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setWinner(value);
-      break;
-    case 2:
       var value = new proto.rvapi.Round;
       reader.readMessage(value,proto.rvapi.Round.deserializeBinaryFromReader);
       msg.addRounds(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addWinners(value);
       break;
     default:
       reader.skipField();
@@ -2210,49 +2211,31 @@ proto.rvapi.Report.prototype.serializeBinary = function() {
  */
 proto.rvapi.Report.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getWinner();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
   f = message.getRoundsList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
-      2,
+      1,
       f,
       proto.rvapi.Round.serializeBinaryToWriter
     );
   }
+  f = message.getWinnersList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(
+      2,
+      f
+    );
+  }
 };
 
 
 /**
- * optional string winner = 1;
- * @return {string}
- */
-proto.rvapi.Report.prototype.getWinner = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.rvapi.Report} returns this
- */
-proto.rvapi.Report.prototype.setWinner = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
-};
-
-
-/**
- * repeated Round rounds = 2;
+ * repeated Round rounds = 1;
  * @return {!Array<!proto.rvapi.Round>}
  */
 proto.rvapi.Report.prototype.getRoundsList = function() {
   return /** @type{!Array<!proto.rvapi.Round>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.rvapi.Round, 2));
+    jspb.Message.getRepeatedWrapperField(this, proto.rvapi.Round, 1));
 };
 
 
@@ -2261,7 +2244,7 @@ proto.rvapi.Report.prototype.getRoundsList = function() {
  * @return {!proto.rvapi.Report} returns this
 */
 proto.rvapi.Report.prototype.setRoundsList = function(value) {
-  return jspb.Message.setRepeatedWrapperField(this, 2, value);
+  return jspb.Message.setRepeatedWrapperField(this, 1, value);
 };
 
 
@@ -2271,7 +2254,7 @@ proto.rvapi.Report.prototype.setRoundsList = function(value) {
  * @return {!proto.rvapi.Round}
  */
 proto.rvapi.Report.prototype.addRounds = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 2, opt_value, proto.rvapi.Round, opt_index);
+  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.rvapi.Round, opt_index);
 };
 
 
@@ -2281,6 +2264,43 @@ proto.rvapi.Report.prototype.addRounds = function(opt_value, opt_index) {
  */
 proto.rvapi.Report.prototype.clearRoundsList = function() {
   return this.setRoundsList([]);
+};
+
+
+/**
+ * repeated string winners = 2;
+ * @return {!Array<string>}
+ */
+proto.rvapi.Report.prototype.getWinnersList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 2));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.rvapi.Report} returns this
+ */
+proto.rvapi.Report.prototype.setWinnersList = function(value) {
+  return jspb.Message.setField(this, 2, value || []);
+};
+
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.rvapi.Report} returns this
+ */
+proto.rvapi.Report.prototype.addWinners = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 2, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.rvapi.Report} returns this
+ */
+proto.rvapi.Report.prototype.clearWinnersList = function() {
+  return this.setWinnersList([]);
 };
 
 
@@ -2693,7 +2713,8 @@ proto.rvapi.Tally.prototype.toObject = function(opt_includeInstance) {
 proto.rvapi.Tally.toObject = function(includeInstance, msg) {
   var f, obj = {
     choice: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    count: jspb.Message.getFieldWithDefault(msg, 2, 0)
+    count: jspb.Message.getFloatingPointFieldWithDefault(msg, 2, 0.0),
+    outcome: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -2735,8 +2756,12 @@ proto.rvapi.Tally.deserializeBinaryFromReader = function(msg, reader) {
       msg.setChoice(value);
       break;
     case 2:
-      var value = /** @type {number} */ (reader.readInt32());
+      var value = /** @type {number} */ (reader.readDouble());
       msg.setCount(value);
+      break;
+    case 3:
+      var value = /** @type {!proto.rvapi.Tally.Outcome} */ (reader.readEnum());
+      msg.setOutcome(value);
       break;
     default:
       reader.skipField();
@@ -2775,14 +2800,30 @@ proto.rvapi.Tally.serializeBinaryToWriter = function(message, writer) {
     );
   }
   f = message.getCount();
-  if (f !== 0) {
-    writer.writeInt32(
+  if (f !== 0.0) {
+    writer.writeDouble(
       2,
+      f
+    );
+  }
+  f = message.getOutcome();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      3,
       f
     );
   }
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.rvapi.Tally.Outcome = {
+  UNKNOWN: 0,
+  ELECTED: 1,
+  ELIMINATED: 2
+};
 
 /**
  * optional string choice = 1;
@@ -2803,11 +2844,11 @@ proto.rvapi.Tally.prototype.setChoice = function(value) {
 
 
 /**
- * optional int32 count = 2;
+ * optional double count = 2;
  * @return {number}
  */
 proto.rvapi.Tally.prototype.getCount = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 2, 0.0));
 };
 
 
@@ -2816,7 +2857,25 @@ proto.rvapi.Tally.prototype.getCount = function() {
  * @return {!proto.rvapi.Tally} returns this
  */
 proto.rvapi.Tally.prototype.setCount = function(value) {
-  return jspb.Message.setProto3IntField(this, 2, value);
+  return jspb.Message.setProto3FloatField(this, 2, value);
+};
+
+
+/**
+ * optional Outcome outcome = 3;
+ * @return {!proto.rvapi.Tally.Outcome}
+ */
+proto.rvapi.Tally.prototype.getOutcome = function() {
+  return /** @type {!proto.rvapi.Tally.Outcome} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {!proto.rvapi.Tally.Outcome} value
+ * @return {!proto.rvapi.Tally} returns this
+ */
+proto.rvapi.Tally.prototype.setOutcome = function(value) {
+  return jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 

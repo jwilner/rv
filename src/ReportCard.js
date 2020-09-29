@@ -1,12 +1,27 @@
 import React, { Fragment, useState } from "react";
 import { isClosed } from "./dates";
 
+import { Tally } from "./pb/rvapi/rvapi_pb";
+
 export function ReportCard({ report, election, now }) {
-  const rounds = report.getRoundsList();
+  const rounds = report.getRoundsList(),
+    numWinners = report.getWinnersList().length;
   return (
     <div className="cell">
-      {report.getWinner() ? (
-        <h4>Winner: {report.getWinner()}</h4>
+      {numWinners ? (
+        numWinners === 1 ? (
+          <h4>Winner: {report.getWinnersList()[0]}</h4>
+        ) : (
+          <h4>
+            Winners:{" "}
+            {report
+              .getWinnersList()
+              .slice(0, numWinners - 1)
+              .join(", ") +
+              " and " +
+              report.getWinnersList()[numWinners - 1]}
+          </h4>
+        )
       ) : (
         <em>
           No winner{" "}
@@ -31,8 +46,7 @@ export function ReportCard({ report, election, now }) {
 }
 
 function ReportCardTile({ round, i, lastRound }) {
-  const [show, setShow] = useState(i === 0 || lastRound),
-    numCandidates = round.getTalliesList().length;
+  const [show, setShow] = useState(i === 0 || lastRound);
   return (
     <div key={i} className="card cell">
       <button onClick={() => setShow(!show)}>
@@ -41,18 +55,15 @@ function ReportCardTile({ round, i, lastRound }) {
       {show ? (
         <ol>
           {round.getTalliesList().map((c, j) => {
-            if (j === 0) {
-              if (lastRound) {
-                // winner
+            switch (c.getOutcome()) {
+              case Tally.Outcome.ELECTED:
                 return (
                   <li key={j}>
                     {c.getChoice()}: {c.getCount()}{" "}
                     <span className="label success">Winner!</span>
                   </li>
                 );
-              }
-            } else if (j === numCandidates - 1) {
-              if (!lastRound) {
+              case Tally.Outcome.ELIMINATED:
                 return (
                   <li key={j}>
                     <s>
@@ -61,13 +72,13 @@ function ReportCardTile({ round, i, lastRound }) {
                     <span className="label alert">Votes redistributed</span>
                   </li>
                 );
-              }
+              default:
+                return (
+                  <li key={j}>
+                    {c.getChoice()}: {c.getCount()}
+                  </li>
+                );
             }
-            return (
-              <li key={j}>
-                {c.getChoice()}: {c.getCount()}
-              </li>
-            );
           })}
         </ol>
       ) : null}

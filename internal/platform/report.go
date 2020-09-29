@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/jwilner/rv/pkg/pb/rvapi"
@@ -32,73 +33,109 @@ func (h *handler) Report(ctx context.Context, req *rvapi.ReportRequest) (*rvapi.
 	if err != nil {
 		return nil, err
 	}
-	return &rvapi.ReportResponse{Report: calculateReport(votes)}, nil
+	return &rvapi.ReportResponse{Report: calculateReport(votes, 1)}, nil
 }
 
-func calculateReport(vs []*models.Vote) *rvapi.Report {
+func calculateReport(vs []*models.Vote, numWinners int) *rvapi.Report {
 	type vote struct {
-		name    string
-		choices []string
+		name        string
+		choices     []string
+		coefficient float64
 	}
 
 	votes := make([]*vote, 0, len(vs))
 	for _, v := range vs {
-		votes = append(votes, &vote{v.Name, v.Choices})
+		if len(v.Choices) > 0 {
+			votes = append(votes, &vote{v.Name, v.Choices, 1})
+		}
 	}
 
-	var r rvapi.Report
-	for {
-		var (
-			eliminated []string
-			counted    = make(map[string]int32)
-		)
-		{
-			var copied []*vote
+	quota := math.Ceil((float64(len(votes)) + 1) / (float64(numWinners) + 1))
+
+	r := &rvapi.Report{Winners: make([]string, 0, numWinners)}
+	for len(r.Winners) < numWinners && len(votes) > 0 {
+		counted := make(map[string]float64)
+		for _, v := range votes {
+			counted[v.choices[0]] += v.coefficient
+		}
+
+		round := rvapi.Round{Tallies: make([]*rvapi.Tally, 0, len(counted))}
+		for k, v := range counted {
+			round.Tallies = append(round.Tallies, &rvapi.Tally{Count: v, Choice: k})
+			round.OverallVotes += int32(math.Round(v))
+		}
+		r.Rounds = append(r.Rounds, &round)
+
+		sort.Sort(sort.Reverse(sortableTallies(round.Tallies)))
+
+		var didElect bool
+		for i := 0; i < len(round.Tallies) && round.Tallies[i].Count >= quota && len(r.Winners) < numWinners; i++ {
+			t := round.Tallies[i]
+			t.Outcome = rvapi.Tally_ELECTED
+
+			didElect = true
+			r.Winners = append(r.Winners, t.Choice)
+
+			surplus := t.Count - quota
+			transferValue := surplus / t.Count
+
+			var cur int
 			for _, v := range votes {
+				idx := -1
+				for i := range v.choices {
+					if t.Choice == v.choices[i] {
+						idx = i
+						break
+					}
+				}
+				if idx >= 0 {
+					v.choices = append(v.choices[:idx], v.choices[idx+1:]...)
+				}
 				if len(v.choices) == 0 {
-					eliminated = append(eliminated, v.name)
 					continue
 				}
-				copied = append(copied, v)
-				counted[v.choices[0]]++
+				votes[cur] = v
+				cur++
+				if idx == 0 {
+					v.coefficient *= transferValue
+				}
 			}
-			votes = copied
+			votes = votes[:cur]
+		}
+		if didElect {
+			continue
 		}
 
-		tallies := make(sortableTallies, 0, len(counted))
-		for k, v := range counted {
-			tallies = append(tallies, &rvapi.Tally{Count: v, Choice: k})
-		}
-		sort.Sort(sort.Reverse(tallies))
-
-		if len(tallies) == 0 {
+		// fewer candidates than remaining positions -- all elected
+		if len(round.Tallies)+len(r.Winners) <= numWinners {
+			for _, t := range round.Tallies {
+				t.Outcome = rvapi.Tally_ELECTED
+				r.Winners = append(r.Winners, t.Choice)
+			}
 			break
 		}
 
-		r.Rounds = append(r.Rounds, &rvapi.Round{
-			OverallVotes: int32(len(votes)),
-			Tallies:      tallies,
-		})
-
-		if tallies[0].Count > int32(len(votes)/2) {
-			r.Winner = tallies[0].Choice
-			break
-		}
-
-		least := tallies[len(tallies)-1].Choice
+		least := round.Tallies[len(round.Tallies)-1]
+		least.Outcome = rvapi.Tally_ELIMINATED
 
 		// remove least popular
+		var cur int
 		for _, v := range votes {
 			for i := range v.choices {
-				if v.choices[i] == least {
+				if v.choices[i] == least.Choice {
 					v.choices = append(v.choices[:i], v.choices[i+1:]...)
 					break
 				}
 			}
+			if len(v.choices) > 0 {
+				votes[cur] = v
+				cur++
+			}
 		}
+		votes = votes[:cur]
 	}
 
-	return &r
+	return r
 }
 
 type sortableTallies []*rvapi.Tally
