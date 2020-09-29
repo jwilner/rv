@@ -548,7 +548,7 @@ func renderElection(el election, rep *rvapi.Report) []slack.Block {
 
 		winnerTxt := "Winner"
 		winnerNames := rep.Winners[0]
-		if len(rep.Winners) > 0 {
+		if len(rep.Winners) > 1 {
 			winnerTxt = "Winners"
 			last := len(rep.Winners) - 1
 			winnerNames = strings.Join(rep.Winners[:last], ", ") + " and " + rep.Winners[last]
