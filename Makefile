@@ -1,4 +1,4 @@
-.PHONY: test migrate dbup
+.PHONY: test gen migrate dbup lint format proto
 
 test:
 	@go test ./...
@@ -12,10 +12,11 @@ migrate: dbup
 dbup:
 	@docker-compose up -d pg
 
+lint:
+	@golangci-lint run
+
 format:
-	@goimports -w -local github.com/jwilner/rv \
-		./internal/ \
-		./cmd/
+	@golangci-lint run --fix
 	@npx prettier --write src/
 
 proto:

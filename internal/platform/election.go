@@ -70,7 +70,7 @@ func (h *handler) Get(ctx context.Context, req *rvapi.GetRequest) (*rvapi.GetRes
 		if err != nil {
 			panic(fmt.Sprintf("impossible outcome: %v", err))
 		}
-		err = s.Err()
+		return nil, s.Err()
 	}
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (h *handler) GetView(ctx context.Context, req *rvapi.GetViewRequest) (*rvap
 		if err != nil {
 			panic(fmt.Sprintf("impossible outcome: %v", err))
 		}
-		err = s.Err()
+		return nil, s.Err()
 	}
 	if err != nil {
 		return nil, err

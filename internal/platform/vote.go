@@ -7,20 +7,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-
+	"github.com/golang/protobuf/proto" //nolint can't use new version yet; required by grpc/status
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgtype"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/jwilner/rv/pkg/pb/rvapi"
-
-	"github.com/jackc/pgtype"
-
-	"github.com/jackc/pgconn"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-
 	"github.com/jwilner/rv/internal/models"
+	"github.com/jwilner/rv/pkg/pb/rvapi"
 )
 
 func (h *handler) Vote(ctx context.Context, req *rvapi.VoteRequest) (*rvapi.VoteResponse, error) {

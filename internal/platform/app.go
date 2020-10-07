@@ -15,10 +15,7 @@ type handler struct {
 
 	txM  *txMgr
 	kGen *stringGener
-	tzes []string
 	tokM *tokenManager
-
-	clientKeys map[string]*rvapi.Digester
 
 	tokLife time.Duration
 }

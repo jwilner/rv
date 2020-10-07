@@ -58,7 +58,8 @@ func (d *Digester) SetDigest(r *TrustedCheckInRequest) error {
 
 var bufPool = sync.Pool{
 	New: func() interface{} {
-		return [sha256.Size]byte{}
+		b := make([]byte, sha256.Size)
+		return &b
 	},
 }
 
@@ -74,8 +75,8 @@ func Valid(r *TrustedCheckInRequest, now time.Time, key []byte) bool {
 		}
 	}
 
-	b := bufPool.Get().([sha256.Size]byte)
+	b := bufPool.Get().(*[]byte)
 	defer func() { bufPool.Put(b) }()
 
-	return hmac.Equal(r.Digest, calculate(hmac.New(sha256.New, key), r, b[:0]))
+	return hmac.Equal(r.Digest, calculate(hmac.New(sha256.New, key), r, (*b)[:0]))
 }
