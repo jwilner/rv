@@ -24,6 +24,7 @@ function CreateElectionForm() {
   const [question, setQuestion] = useState(""),
     [questionError, setQuestionError] = useState(""),
     [choices, setChoices] = useState([]),
+    [vacancies, setVacancies] = useState(1),
     [widgetValid, setWidgetValid] = useState(true),
     history = useHistory(),
     client = useContext(ClientContext);
@@ -40,12 +41,13 @@ function CreateElectionForm() {
   }
 
   function submit() {
-    const req = new CreateRequest();
-    req.setQuestion(question);
-    req.setChoicesList(choices);
-
     client
-      .create(req)
+      .create(
+        new CreateRequest()
+          .setQuestion(question)
+          .setChoicesList(choices)
+          .setVacancies(vacancies)
+      )
       .then((resp) => history.push(`/e/${resp.getElection().getKey()}`))
       .catch((resp) => console.log(resp));
   }
@@ -68,7 +70,7 @@ function CreateElectionForm() {
     }
 
     function addValue() {
-      if (inflightChoiceError) {
+      if (inFlightChoice === "" || inflightChoiceError) {
         return;
       }
       setChoices([...choices, inFlightChoice]);
@@ -115,7 +117,7 @@ function CreateElectionForm() {
             <button
               className="button"
               onClick={addValue}
-              disabled={!!inflightChoiceError}
+              disabled={inFlightChoice === "" || inflightChoiceError}
             >
               +
             </button>
@@ -136,9 +138,27 @@ function CreateElectionForm() {
         value={question}
       />
       <ChoicesWidget />
-      <button className="button success" onClick={submit} disabled={!valid()}>
-        Create
-      </button>
+      <div className="input-group">
+        <label className="input-group-label">Vacancies: </label>
+        <input
+          className="input-group-field"
+          type="number"
+          defaultValue="1"
+          min="1"
+          max={choices.length > 0 ? choices.length : 1}
+          disabled={choices.length <= 1}
+          onChange={(e) => setVacancies(parseInt(e.target.value))}
+        />
+        <div className="input-group-button">
+          <button
+            className="button success"
+            onClick={submit}
+            disabled={!valid()}
+          >
+            Create
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

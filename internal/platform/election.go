@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -28,20 +29,29 @@ func (h *handler) Create(ctx context.Context, request *rvapi.CreateRequest) (*rv
 			Description: "Cannot be empty",
 		})
 	}
+	if vacancies := int(request.Vacancies); vacancies < 1 || vacancies > len(request.Choices) {
+		log.Println(vacancies, request.Choices)
+		details = append(details, &errdetails.BadRequest_FieldViolation{
+			Field:       "Vacancies",
+			Description: "Must be between 1 and the number of choices",
+		})
+	}
 	if len(details) > 0 {
+		log.Println(details)
 		return nil, detailedErr(
 			codes.InvalidArgument,
 			"invalid create request",
 			&errdetails.BadRequest{FieldViolations: details},
 		)
 	}
-
+	log.Println("GOT THIS USER ID", userID(ctx))
 	e := &models.Election{
 		Key:       h.kGen.newKey(keyCharSet, 8),
 		BallotKey: h.kGen.newKey(keyCharSet, 8),
 		Question:  request.Question,
 		Choices:   norm.raw(),
 		UserID:    userID(ctx),
+		Vacancies: int(request.Vacancies),
 	}
 	_ = e.Close.Set(nil) // set null
 	_ = e.CreatedAt.Set(time.Now())

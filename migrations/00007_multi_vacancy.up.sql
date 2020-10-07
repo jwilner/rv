@@ -1,0 +1,2 @@
+ALTER TABLE rv.election
+    ADD COLUMN vacancies INTEGER NOT NULL DEFAULT 1;

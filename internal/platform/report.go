@@ -53,7 +53,7 @@ func (h *handler) Report(ctx context.Context, req *rvapi.ReportRequest) (*rvapi.
 		ordering[c] = i
 	}
 
-	return &rvapi.ReportResponse{Report: calculateReport(ordering, votes, 1)}, nil
+	return &rvapi.ReportResponse{Report: calculateReport(ordering, votes, el.Vacancies)}, nil
 }
 
 func calculateReport(ordering map[string]int, vs []*models.Vote, numWinners int) *rvapi.Report {
