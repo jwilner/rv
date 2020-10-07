@@ -1,3 +1,7 @@
+[![Tests](https://github.com/jwilner/rv/workflows/tests/badge.svg)](https://github.com/jwilner/rv/actions?query=workflow%3Atests+branch%3Amain)
+[![Lint](https://github.com/jwilner/rv/workflows/lint/badge.svg)](https://github.com/jwilner/rv/actions?query=workflow%3Alint+branch%3Amain)
+[![GoDoc](https://godoc.org/github.com/jwilner/rv?status.svg)](https://godoc.org/github.com/jwilner/rv)
+
 # rv
 
 A simple ranked voting app. Aims to facilitate understanding (and adoption) of ranked choice voting algorithms in elections by making them convenient and easy to use in our daily lives.
