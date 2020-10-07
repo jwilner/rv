@@ -111,6 +111,7 @@ message GetViewResponse {
 message CreateRequest {
     string question = 1;
     repeated string choices = 2;
+    int32 vacancies = 3;
 }
 
 message CreateResponse {
@@ -130,6 +131,7 @@ message Election {
     string ballot_key = 4;
     google.protobuf.Timestamp close = 5;
     repeated Flag flags = 6;
+    int32 vacancies = 7;
 }
 
 message ElectionView {
@@ -138,6 +140,7 @@ message ElectionView {
     string ballot_key = 3;
     google.protobuf.Timestamp close = 5;
     repeated Election.Flag flags = 6;
+    int32 vacancies = 7;
 }
 
 message SetClose {

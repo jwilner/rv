@@ -36,6 +36,7 @@ type Election struct {
 	CloseTZ   null.String        `boil:"close_tz" json:"close_tz,omitempty" toml:"close_tz" yaml:"close_tz,omitempty"`
 	Flags     types.StringArray  `boil:"flags" json:"flags" toml:"flags" yaml:"flags"`
 	UserID    int64              `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Vacancies int                `boil:"vacancies" json:"vacancies" toml:"vacancies" yaml:"vacancies"`
 
 	R *electionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L electionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -52,6 +53,7 @@ var ElectionColumns = struct {
 	CloseTZ   string
 	Flags     string
 	UserID    string
+	Vacancies string
 }{
 	ID:        "id",
 	Key:       "key",
@@ -63,6 +65,7 @@ var ElectionColumns = struct {
 	CloseTZ:   "close_tz",
 	Flags:     "flags",
 	UserID:    "user_id",
+	Vacancies: "vacancies",
 }
 
 // Generated where
@@ -132,6 +135,29 @@ func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+type whereHelperint struct{ field string }
+
+func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
 var ElectionWhere = struct {
 	ID        whereHelperint64
 	Key       whereHelperstring
@@ -143,6 +169,7 @@ var ElectionWhere = struct {
 	CloseTZ   whereHelpernull_String
 	Flags     whereHelpertypes_StringArray
 	UserID    whereHelperint64
+	Vacancies whereHelperint
 }{
 	ID:        whereHelperint64{field: "\"rv\".\"election\".\"id\""},
 	Key:       whereHelperstring{field: "\"rv\".\"election\".\"key\""},
@@ -154,6 +181,7 @@ var ElectionWhere = struct {
 	CloseTZ:   whereHelpernull_String{field: "\"rv\".\"election\".\"close_tz\""},
 	Flags:     whereHelpertypes_StringArray{field: "\"rv\".\"election\".\"flags\""},
 	UserID:    whereHelperint64{field: "\"rv\".\"election\".\"user_id\""},
+	Vacancies: whereHelperint{field: "\"rv\".\"election\".\"vacancies\""},
 }
 
 // ElectionRels is where relationship names are stored.
@@ -180,9 +208,9 @@ func (*electionR) NewStruct() *electionR {
 type electionL struct{}
 
 var (
-	electionAllColumns            = []string{"id", "key", "question", "choices", "created_at", "ballot_key", "close", "close_tz", "flags", "user_id"}
+	electionAllColumns            = []string{"id", "key", "question", "choices", "created_at", "ballot_key", "close", "close_tz", "flags", "user_id", "vacancies"}
 	electionColumnsWithoutDefault = []string{"key", "question", "choices", "created_at", "ballot_key", "close", "close_tz", "user_id"}
-	electionColumnsWithDefault    = []string{"id", "flags"}
+	electionColumnsWithDefault    = []string{"id", "flags", "vacancies"}
 	electionPrimaryKeyColumns     = []string{"id"}
 )
 

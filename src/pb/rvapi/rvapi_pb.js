@@ -3481,7 +3481,8 @@ proto.rvapi.CreateRequest.prototype.toObject = function(opt_includeInstance) {
 proto.rvapi.CreateRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     question: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    choicesList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f
+    choicesList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f,
+    vacancies: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -3526,6 +3527,10 @@ proto.rvapi.CreateRequest.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {string} */ (reader.readString());
       msg.addChoices(value);
       break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setVacancies(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -3566,6 +3571,13 @@ proto.rvapi.CreateRequest.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeRepeatedString(
       2,
+      f
+    );
+  }
+  f = message.getVacancies();
+  if (f !== 0) {
+    writer.writeInt32(
+      3,
       f
     );
   }
@@ -3624,6 +3636,24 @@ proto.rvapi.CreateRequest.prototype.addChoices = function(value, opt_index) {
  */
 proto.rvapi.CreateRequest.prototype.clearChoicesList = function() {
   return this.setChoicesList([]);
+};
+
+
+/**
+ * optional int32 vacancies = 3;
+ * @return {number}
+ */
+proto.rvapi.CreateRequest.prototype.getVacancies = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.rvapi.CreateRequest} returns this
+ */
+proto.rvapi.CreateRequest.prototype.setVacancies = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 
@@ -3822,7 +3852,8 @@ proto.rvapi.Election.toObject = function(includeInstance, msg) {
     key: jspb.Message.getFieldWithDefault(msg, 3, ""),
     ballotKey: jspb.Message.getFieldWithDefault(msg, 4, ""),
     close: (f = msg.getClose()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-    flagsList: (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f
+    flagsList: (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f,
+    vacancies: jspb.Message.getFieldWithDefault(msg, 7, 0)
   };
 
   if (includeInstance) {
@@ -3883,6 +3914,10 @@ proto.rvapi.Election.deserializeBinaryFromReader = function(msg, reader) {
     case 6:
       var value = /** @type {!Array<!proto.rvapi.Election.Flag>} */ (reader.readPackedEnum());
       msg.setFlagsList(value);
+      break;
+    case 7:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setVacancies(value);
       break;
     default:
       reader.skipField();
@@ -3953,6 +3988,13 @@ proto.rvapi.Election.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writePackedEnum(
       6,
+      f
+    );
+  }
+  f = message.getVacancies();
+  if (f !== 0) {
+    writer.writeInt32(
+      7,
       f
     );
   }
@@ -4133,6 +4175,24 @@ proto.rvapi.Election.prototype.clearFlagsList = function() {
 };
 
 
+/**
+ * optional int32 vacancies = 7;
+ * @return {number}
+ */
+proto.rvapi.Election.prototype.getVacancies = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.rvapi.Election} returns this
+ */
+proto.rvapi.Election.prototype.setVacancies = function(value) {
+  return jspb.Message.setProto3IntField(this, 7, value);
+};
+
+
 
 /**
  * List of repeated fields within this message type.
@@ -4176,7 +4236,8 @@ proto.rvapi.ElectionView.toObject = function(includeInstance, msg) {
     choicesList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f,
     ballotKey: jspb.Message.getFieldWithDefault(msg, 3, ""),
     close: (f = msg.getClose()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-    flagsList: (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f
+    flagsList: (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f,
+    vacancies: jspb.Message.getFieldWithDefault(msg, 7, 0)
   };
 
   if (includeInstance) {
@@ -4233,6 +4294,10 @@ proto.rvapi.ElectionView.deserializeBinaryFromReader = function(msg, reader) {
     case 6:
       var value = /** @type {!Array<!proto.rvapi.Election.Flag>} */ (reader.readPackedEnum());
       msg.setFlagsList(value);
+      break;
+    case 7:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setVacancies(value);
       break;
     default:
       reader.skipField();
@@ -4296,6 +4361,13 @@ proto.rvapi.ElectionView.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writePackedEnum(
       6,
+      f
+    );
+  }
+  f = message.getVacancies();
+  if (f !== 0) {
+    writer.writeInt32(
+      7,
       f
     );
   }
@@ -4446,6 +4518,24 @@ proto.rvapi.ElectionView.prototype.addFlags = function(value, opt_index) {
  */
 proto.rvapi.ElectionView.prototype.clearFlagsList = function() {
   return this.setFlagsList([]);
+};
+
+
+/**
+ * optional int32 vacancies = 7;
+ * @return {number}
+ */
+proto.rvapi.ElectionView.prototype.getVacancies = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.rvapi.ElectionView} returns this
+ */
+proto.rvapi.ElectionView.prototype.setVacancies = function(value) {
+  return jspb.Message.setProto3IntField(this, 7, value);
 };
 
 
